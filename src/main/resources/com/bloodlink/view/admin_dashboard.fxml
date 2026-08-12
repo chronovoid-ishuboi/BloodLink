@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.bloodlink.controller.AdminDashboardController"
+    stylesheets="@../css/theme.css" styleClass="app-background">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="16" styleClass="topbar">
+            <Label text="♥" styleClass="topbar-mark" />
+            <Label text="BloodLink" styleClass="header-brand" />
+            <Separator orientation="VERTICAL" prefHeight="28" />
+            <Label fx:id="welcomeLabel" styleClass="topbar-title" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="statusMessageLabel" styleClass="muted-text" />
+            <Button text="Refresh all" onAction="#refreshAll" styleClass="button-secondary" />
+            <Button text="Sign out" onAction="#logout" styleClass="button-ghost" />
+        </HBox>
+    </top>
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" styleClass="workspace-tabs">
+            <tabs>
+                <Tab text="Analytics">
+                    <ScrollPane fitToWidth="true" styleClass="transparent-scroll">
+                        <VBox spacing="18" style="-fx-padding: 24;">
+                            <GridPane hgap="16">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="25" />
+                                    <ColumnConstraints percentWidth="25" />
+                                    <ColumnConstraints percentWidth="25" />
+                                    <ColumnConstraints percentWidth="25" />
+                                </columnConstraints>
+                                <VBox spacing="8" styleClass="stat-card" GridPane.columnIndex="0">
+                                    <Label text="TOTAL DONORS" styleClass="stat-label" />
+                                    <Label fx:id="totalDonorsLabel" styleClass="stat-value" />
+                                </VBox>
+                                <VBox spacing="8" styleClass="stat-card" GridPane.columnIndex="1">
+                                    <Label text="PENDING REQUESTS" styleClass="stat-label" />
+                                    <Label fx:id="pendingRequestsLabel"
+                                        styleClass="stat-value-accent" />
+                                </VBox>
+                                <VBox spacing="8" styleClass="stat-card" GridPane.columnIndex="2">
+                                    <Label text="ACTIVE REQUESTS" styleClass="stat-label" />
+                                    <Label fx:id="activeRequestsLabel" styleClass="stat-value" />
+                                </VBox>
+                                <VBox spacing="8" styleClass="stat-card" GridPane.columnIndex="3">
+                                    <Label text="FULFILLMENT RATE" styleClass="stat-label" />
+                                    <Label fx:id="fulfillmentRateLabel" styleClass="stat-value" />
+                                </VBox>
+                            </GridPane>
+                            <GridPane hgap="16" vgap="16">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="50" />
+                                    <ColumnConstraints percentWidth="50" />
+                                </columnConstraints>
+                                <VBox styleClass="content-card" GridPane.columnIndex="0">
+                                    <Label text="Requests by blood group" styleClass="section-title" />
+                                    <BarChart fx:id="demandChart" animated="false"
+                                        legendVisible="false" prefHeight="330">
+                                        <xAxis>
+                                            <CategoryAxis label="Blood group" />
+                                        </xAxis>
+                                        <yAxis>
+                                            <NumberAxis label="Requests" forceZeroInRange="true" />
+                                        </yAxis>
+                                    </BarChart>
+                                </VBox>
+                                <VBox styleClass="content-card" GridPane.columnIndex="1">
+                                    <Label text="Monthly request volume" styleClass="section-title" />
+                                    <LineChart fx:id="monthlyChart" animated="false"
+                                        legendVisible="false" prefHeight="330">
+                                        <xAxis>
+                                            <CategoryAxis label="Month" />
+                                        </xAxis>
+                                        <yAxis>
+                                            <NumberAxis label="Requests" forceZeroInRange="true" />
+                                        </yAxis>
+                                    </LineChart>
+                                </VBox>
+
+                                <VBox spacing="10"
+                                    styleClass="content-card"
+                                    GridPane.columnIndex="0"
+                                    GridPane.rowIndex="1">
+
+                                    <Label text="Lifecycle distribution"
+                                        styleClass="section-title" />
+
+                                    <PieChart fx:id="statusChart"
+                                        animated="false"
+                                        labelsVisible="false"
+                                        legendVisible="true"
+                                        legendSide="BOTTOM"
+                                        minHeight="320"
+                                        prefHeight="340"
+                                        VBox.vgrow="ALWAYS" />
+                                </VBox>
+                                <VBox styleClass="content-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <Label text="Supply vs Demand gap" styleClass="section-title" />
+                                    <TableView fx:id="demandTable" VBox.vgrow="ALWAYS" minHeight="320" prefHeight="340">
+                                        <columns>
+                                            <TableColumn fx:id="demandBloodColumn" text="Group" prefWidth="90" />
+                                            <TableColumn fx:id="demandPendingColumn" text="Demand" prefWidth="100" />
+                                            <TableColumn fx:id="demandAvailableColumn" text="Supply" prefWidth="100" />
+                                            <TableColumn fx:id="demandGapColumn" text="Gap" prefWidth="100" />
+                                        </columns>
+                                    </TableView>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+                <Tab text="User management">
+                    <VBox spacing="14" style="-fx-padding: 24;">
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="User registry" styleClass="page-title" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <TextField fx:id="userSearchField"
+                                promptText="Search name, email, district" prefWidth="300" />
+                            <Button text="Approve" onAction="#approveSelectedUser"
+                                styleClass="button-primary" />
+                            <Button text="Activate" onAction="#activateSelectedUser"
+                                styleClass="button-secondary" />
+                            <Button text="Suspend" onAction="#suspendSelectedUser"
+                                styleClass="button-danger-outline" />
+                            <Button text="Reset password" onAction="#resetSelectedPassword"
+                                styleClass="button-ghost" />
+                        </HBox>
+                        <TableView fx:id="userTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="userIdColumn" text="ID" prefWidth="55" />
+                                <TableColumn fx:id="userNameColumn" text="Name" prefWidth="170" />
+                                <TableColumn fx:id="userEmailColumn" text="Email" prefWidth="210" />
+                                <TableColumn fx:id="userRoleColumn" text="Role" />
+                                <TableColumn fx:id="userDistrictColumn" text="District" />
+                                <TableColumn fx:id="userApprovedColumn" text="Approval" />
+                                <TableColumn fx:id="userActiveColumn" text="State" />
+                                <TableColumn fx:id="userCreatedColumn" text="Created"
+                                    prefWidth="150" />
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+                <Tab text="Request operations">
+                    <VBox spacing="14" style="-fx-padding: 24;">
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="All blood requests" styleClass="page-title" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <TextField fx:id="requestSearchField"
+                                promptText="Search requester, hospital, district" prefWidth="320" />
+                            <Button text="Escalate" onAction="#escalateSelectedRequest"
+                                styleClass="button-danger" />
+                            <Button text="Close" onAction="#closeSelectedRequest"
+                                styleClass="button-secondary" />
+                        </HBox>
+                        <TableView fx:id="requestTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="requestIdColumn" text="ID" prefWidth="55" />
+                                <TableColumn fx:id="requesterColumn" text="Requester" />
+                                <TableColumn fx:id="requestBloodColumn" text="Blood" />
+                                <TableColumn fx:id="requestUnitsColumn" text="Units" />
+                                <TableColumn fx:id="requestUrgencyColumn" text="Urgency" />
+                                <TableColumn fx:id="requestHospitalColumn" text="Hospital"
+                                    prefWidth="180" />
+                                <TableColumn fx:id="requestDistrictColumn" text="District" />
+                                <TableColumn fx:id="requestStatusColumn" text="Status" />
+                                <TableColumn fx:id="requestCreatedColumn" text="Created"
+                                    prefWidth="150" />
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+                <Tab text="Audit log">
+                    <VBox spacing="14" style="-fx-padding: 24;">
+                        <Label text="System audit trail" styleClass="page-title" />
+                        <Label
+                            text="Registration, matching responses, lifecycle transitions, user administration and fulfillment confirmations are recorded here."
+                            wrapText="true" styleClass="muted-text" />
+                        <TableView fx:id="auditTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="auditTimeColumn" text="Time" prefWidth="170" />
+                                <TableColumn fx:id="auditActorColumn" text="Actor" prefWidth="150" />
+                                <TableColumn fx:id="auditActionColumn" text="Action" prefWidth="160" />
+                                <TableColumn fx:id="auditEntityColumn" text="Entity" prefWidth="150" />
+                                <TableColumn fx:id="auditDetailsColumn" text="Details"
+                                    prefWidth="360" />
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>

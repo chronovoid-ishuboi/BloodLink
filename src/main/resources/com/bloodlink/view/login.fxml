@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.bloodlink.controller.LoginController" stylesheets="@../css/theme.css"
+    styleClass="auth-background">
+    <HBox maxWidth="940" maxHeight="560" styleClass="auth-card">
+        <VBox prefWidth="420" spacing="24" styleClass="brand-panel">
+            <Label text="♥" styleClass="brand-mark" />
+            <Label text="BloodLink" styleClass="brand-title" />
+            <Label text="Where Blood Finds Life" styleClass="brand-tagline" />
+            <Region VBox.vgrow="ALWAYS" />
+            <Label
+                text="Emergency blood response, eligibility checks, donor matching and request coordination in one platform."
+                wrapText="true" styleClass="brand-copy" />
+            <Label text="For donors, requesters, and administrators." wrapText="true"
+                styleClass="helper-text" />
+        </VBox>
+        <VBox prefWidth="520" spacing="18" styleClass="auth-form-panel">
+            <Label text="Welcome back" styleClass="page-title" />
+            <Label text="Sign in to access your BloodLink dashboard." styleClass="muted-text" />
+            <VBox spacing="7">
+                <Label text="Account role" styleClass="field-label" />
+                <ComboBox fx:id="roleCombo" maxWidth="Infinity" />
+            </VBox>
+            <VBox spacing="7">
+                <Label text="Email address" styleClass="field-label" />
+                <TextField fx:id="emailField" promptText="name@example.com" />
+            </VBox>
+            <VBox spacing="7">
+                <Label text="Password" styleClass="field-label" />
+                <PasswordField fx:id="passwordField" promptText="Enter your password" />
+            </VBox>
+            <Label fx:id="errorLabel" wrapText="true" styleClass="error-text" />
+            <Button fx:id="signInButton" text="Sign in securely" maxWidth="Infinity"
+                onAction="#signIn" styleClass="button-primary" />
+            <Separator />
+            <HBox alignment="CENTER" spacing="8">
+                <Label text="New to BloodLink?" styleClass="muted-text" />
+                <Hyperlink text="Create an account" onAction="#openRegistration" />
+            </HBox>
+            <Region VBox.vgrow="ALWAYS" />
+            <Label text="Use your approved email and password to continue."
+                wrapText="true" styleClass="helper-text" />
+        </VBox>
+    </HBox>
+</StackPane>

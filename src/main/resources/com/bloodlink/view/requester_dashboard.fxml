@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.bloodlink.controller.RequesterDashboardController" stylesheets="@../css/theme.css" styleClass="app-background">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="16" styleClass="topbar">
+            <Label text="♥" styleClass="topbar-mark"/><Label text="BloodLink" styleClass="header-brand"/>
+            <Separator orientation="VERTICAL" prefHeight="28"/><Label fx:id="welcomeLabel" styleClass="topbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/><Label text="Unread" styleClass="muted-text"/><Label fx:id="unreadLabel" text="0" styleClass="notification-count"/>
+            <Button text="Refresh" onAction="#refreshAll" styleClass="button-secondary"/><Button text="Sign out" onAction="#logout" styleClass="button-ghost"/>
+        </HBox>
+    </top>
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" styleClass="workspace-tabs">
+            <tabs>
+                <Tab text="Emergency request">
+                    <ScrollPane fitToWidth="true" styleClass="transparent-scroll"><VBox spacing="18" style="-fx-padding: 24;">
+                        <VBox spacing="14" styleClass="content-card"><Label text="Submit an emergency blood request" styleClass="page-title"/><Label text="The request is timestamped immediately and the eligibility-aware matching engine runs after submission." wrapText="true" styleClass="muted-text"/>
+                            <GridPane hgap="16" vgap="14"><columnConstraints><ColumnConstraints percentWidth="33"/><ColumnConstraints percentWidth="33"/><ColumnConstraints percentWidth="34"/></columnConstraints>
+                                <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0"><Label text="Blood group" styleClass="field-label"/><ComboBox fx:id="bloodGroupCombo" maxWidth="Infinity"/></VBox>
+                                <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0"><Label text="Units needed" styleClass="field-label"/><Spinner fx:id="unitsSpinner" editable="true" maxWidth="Infinity"/></VBox>
+                                <VBox spacing="6" GridPane.columnIndex="2" GridPane.rowIndex="0"><Label text="Urgency" styleClass="field-label"/><ComboBox fx:id="urgencyCombo" maxWidth="Infinity"/></VBox>
+                                <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1"><Label text="Hospital" styleClass="field-label"/><TextField fx:id="hospitalField" promptText="Hospital or clinic name"/></VBox>
+                                <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1"><Label text="District" styleClass="field-label"/><TextField fx:id="requestDistrictField"/></VBox>
+                                <VBox spacing="6" GridPane.columnIndex="2" GridPane.rowIndex="1"><Label text="Required by" styleClass="field-label"/><DatePicker fx:id="deadlinePicker" maxWidth="Infinity"/></VBox>
+                            </GridPane>
+                            <Label text="Clinical notes / contact instructions" styleClass="field-label"/><TextArea fx:id="notesArea" prefRowCount="3" wrapText="true" promptText="Ward, patient condition, contact person, or other essential information"/>
+                            <HBox alignment="CENTER_RIGHT" spacing="12"><Label fx:id="requestMessageLabel" wrapText="true" styleClass="message-text"/><Region HBox.hgrow="ALWAYS"/><Button text="Submit and find donors" onAction="#createRequest" styleClass="button-danger"/></HBox>
+                        </VBox>
+                        <VBox spacing="12" styleClass="content-card"><HBox alignment="CENTER_LEFT"><Label text="Your request lifecycle" styleClass="section-title"/><Region HBox.hgrow="ALWAYS"/><Button text="Run matching again" onAction="#rematchSelected" styleClass="button-secondary"/><Button text="Mark fulfilled" onAction="#markFulfilled" styleClass="button-primary"/><Button text="Cancel" onAction="#cancelSelected" styleClass="button-ghost"/></HBox>
+                            <TableView fx:id="requestTable" prefHeight="320"><columns>
+                                <TableColumn fx:id="requestIdColumn" text="ID" prefWidth="55"/><TableColumn fx:id="requestBloodColumn" text="Blood"/><TableColumn fx:id="unitsColumn" text="Units"/><TableColumn fx:id="urgencyColumn" text="Urgency"/><TableColumn fx:id="hospitalColumn" text="Hospital" prefWidth="180"/><TableColumn fx:id="districtColumn" text="District"/><TableColumn fx:id="deadlineColumn" text="Deadline"/><TableColumn fx:id="statusColumn" text="Status"/>
+                            </columns></TableView>
+                        </VBox>
+                        <VBox spacing="12" styleClass="content-card"><Label text="Ranked eligible donors for selected request" styleClass="section-title"/><TableView fx:id="matchTable" prefHeight="280"><columns>
+                            <TableColumn fx:id="donorNameColumn" text="Donor" prefWidth="150"/><TableColumn fx:id="donorBloodColumn" text="Blood"/><TableColumn fx:id="donorDistrictColumn" text="District"/><TableColumn fx:id="donorPhoneColumn" text="Phone" prefWidth="120"/><TableColumn fx:id="donorBadgeColumn" text="Badge"/><TableColumn fx:id="donorScoreColumn" text="Score"/><TableColumn fx:id="donorReasonColumn" text="Why matched" prefWidth="300"/>
+                        </columns></TableView></VBox>
+                        <VBox spacing="12" styleClass="content-card"><Label text="Status timeline for selected request" styleClass="section-title"/><TableView fx:id="historyTable" prefHeight="230"><columns>
+                            <TableColumn fx:id="historyFromColumn" text="From" prefWidth="90"/><TableColumn fx:id="historyToColumn" text="To" prefWidth="90"/><TableColumn fx:id="historyActorColumn" text="Changed by" prefWidth="150"/><TableColumn fx:id="historyNoteColumn" text="Reason / note" prefWidth="320"/><TableColumn fx:id="historyTimeColumn" text="Time" prefWidth="170"/>
+                        </columns></TableView></VBox>
+                    </VBox></ScrollPane>
+                </Tab>
+                <Tab text="Notifications"><VBox spacing="14" style="-fx-padding: 24;"><HBox alignment="CENTER_LEFT"><Label text="Request updates" styleClass="page-title"/><Region HBox.hgrow="ALWAYS"/><Button text="Mark all read" onAction="#markAllNotificationsRead" styleClass="button-secondary"/></HBox><ListView fx:id="notificationList" VBox.vgrow="ALWAYS" styleClass="notification-list"/></VBox></Tab>
+                <Tab text="Profile &amp; security"><ScrollPane fitToWidth="true" styleClass="transparent-scroll"><VBox spacing="18" style="-fx-padding: 24;">
+                    <VBox spacing="12" styleClass="content-card"><Label text="Contact profile" styleClass="section-title"/><GridPane hgap="14" vgap="10"><columnConstraints><ColumnConstraints percentWidth="50"/><ColumnConstraints percentWidth="50"/></columnConstraints><VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0"><Label text="Full name" styleClass="field-label"/><TextField fx:id="nameField"/></VBox><VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0"><Label text="Phone" styleClass="field-label"/><TextField fx:id="phoneField"/></VBox><VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1"><Label text="District" styleClass="field-label"/><TextField fx:id="profileDistrictField"/></VBox><VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1"><Label text="Address" styleClass="field-label"/><TextArea fx:id="addressArea" prefRowCount="2"/></VBox></GridPane><Button text="Save profile" onAction="#saveProfile" styleClass="button-primary" maxWidth="160"/></VBox>
+                    <VBox spacing="12" styleClass="content-card"><Label text="Change password" styleClass="section-title"/><GridPane hgap="14"><columnConstraints><ColumnConstraints percentWidth="33"/><ColumnConstraints percentWidth="33"/><ColumnConstraints percentWidth="34"/></columnConstraints><PasswordField fx:id="oldPasswordField" promptText="Current password" GridPane.columnIndex="0"/><PasswordField fx:id="newPasswordField" promptText="New password" GridPane.columnIndex="1"/><PasswordField fx:id="confirmPasswordField" promptText="Confirm new password" GridPane.columnIndex="2"/></GridPane><Button text="Change password" onAction="#changePassword" styleClass="button-secondary" maxWidth="180"/><Label fx:id="profileMessageLabel" wrapText="true" styleClass="message-text"/></VBox>
+                </VBox></ScrollPane></Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>

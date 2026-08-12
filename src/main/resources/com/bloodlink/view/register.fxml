@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.bloodlink.controller.RegisterController" stylesheets="@../css/theme.css" styleClass="app-background">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="simple-header">
+            <Button text="← Back" onAction="#backToLogin" styleClass="button-ghost"/>
+            <Label text="BloodLink" styleClass="header-brand"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Secure role-based registration" styleClass="muted-text"/>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="transparent-scroll">
+            <VBox alignment="TOP_CENTER" spacing="18" style="-fx-padding: 32 24 48 24;">
+                <VBox maxWidth="820" spacing="18" styleClass="content-card">
+                    <Label text="Create your BloodLink account" styleClass="page-title"/>
+                    <Label text="Donors provide health and blood information. Requesters can begin submitting emergency requests immediately." wrapText="true" styleClass="muted-text"/>
+                    <GridPane hgap="18" vgap="14">
+                        <columnConstraints><ColumnConstraints percentWidth="50"/><ColumnConstraints percentWidth="50"/></columnConstraints>
+                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0"><Label text="Role" styleClass="field-label"/><ComboBox fx:id="roleCombo" maxWidth="Infinity"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0"><Label text="Full name" styleClass="field-label"/><TextField fx:id="fullNameField" promptText="Your full name"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1"><Label text="Email" styleClass="field-label"/><TextField fx:id="emailField" promptText="name@example.com"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1"><Label text="Mobile number" styleClass="field-label"/><TextField fx:id="phoneField" promptText="01XXXXXXXXX"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="2"><Label text="District" styleClass="field-label"/><TextField fx:id="districtField" promptText="Dhaka"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="2"><Label text="Address" styleClass="field-label"/><TextArea fx:id="addressArea" prefRowCount="2" wrapText="true" promptText="Area, road, landmark"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="3"><Label text="Password" styleClass="field-label"/><PasswordField fx:id="passwordField" promptText="Minimum 8 characters"/></VBox>
+                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="3"><Label text="Confirm password" styleClass="field-label"/><PasswordField fx:id="confirmPasswordField" promptText="Repeat password"/></VBox>
+                    </GridPane>
+                    <VBox fx:id="donorFields" spacing="14" styleClass="subtle-panel">
+                        <Label text="Donor health profile" styleClass="section-title"/>
+                        <GridPane hgap="18" vgap="14">
+                            <columnConstraints><ColumnConstraints percentWidth="50"/><ColumnConstraints percentWidth="50"/></columnConstraints>
+                            <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0"><Label text="Blood group" styleClass="field-label"/><ComboBox fx:id="bloodGroupCombo" maxWidth="Infinity"/></VBox>
+                            <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0"><Label text="Birth date" styleClass="field-label"/><DatePicker fx:id="birthDatePicker" maxWidth="Infinity"/></VBox>
+                            <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1"><Label text="Weight (kg)" styleClass="field-label"/><TextField fx:id="weightField" promptText="e.g. 68"/></VBox>
+                            <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1"><Label text="Last donation date (optional)" styleClass="field-label"/><DatePicker fx:id="lastDonationPicker" maxWidth="Infinity"/></VBox>
+                        </GridPane>
+                        <Label text="New donor accounts remain pending until an administrator approves them." wrapText="true" styleClass="helper-text"/>
+                    </VBox>
+                    <Label fx:id="errorLabel" wrapText="true" styleClass="error-text"/>
+                    <HBox alignment="CENTER_RIGHT" spacing="12">
+                        <Button text="Cancel" onAction="#backToLogin" styleClass="button-secondary"/>
+                        <Button fx:id="createButton" text="Create account" onAction="#createAccount" styleClass="button-primary"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
