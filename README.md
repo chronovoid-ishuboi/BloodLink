@@ -179,3 +179,4 @@ No external icon pack or custom font is required. The current interface uses Uni
 - `docs/COMPLETION_CHECKLIST.md`
 
 The originally uploaded proposal, README, Maven file, and `.gitignore` are preserved under `docs/reference/` for traceability.
+BloodLink is an emergency blood response platform that reduces the time required to locate eligible blood donors  during critical medical situations through intelligent donor prioritization, eligibility assessment, and real-time emergency coordination
