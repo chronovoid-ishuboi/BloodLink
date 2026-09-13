@@ -121,7 +121,7 @@ public final class UserDAO {
                     statement.setString(5, data.district().trim());
                     statement.setString(6, data.address() == null ? "" : data.address().trim());
                     statement.setString(7, data.role().name());
-                    statement.setBoolean(8, data.role() == Role.REQUESTER);
+                    statement.setBoolean(8, false); // All new accounts require admin approval
                     statement.setString(9, data.nidNumber() == null ? null : data.nidNumber().trim());
                     statement.setString(10, data.guardianName() == null ? null : data.guardianName().trim());
                     statement.setString(11, data.guardianPhone() == null ? null : data.guardianPhone().trim());

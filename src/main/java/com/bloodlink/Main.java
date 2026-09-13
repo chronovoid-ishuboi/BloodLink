@@ -1,8 +1,10 @@
 package com.bloodlink;
 
+import com.bloodlink.dao.UserDAO;
 import com.bloodlink.util.AlertUtil;
 import com.bloodlink.util.DatabaseSetup;
 import com.bloodlink.util.DBConnection;
+import com.bloodlink.util.PhotoCache;
 import com.bloodlink.util.SceneManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -10,6 +12,8 @@ import javafx.stage.Stage;
 
 public final class Main extends Application {
     @Override public void start(Stage stage) {
+        // Initialize PhotoCache with a UserDAO instance to fetch images lazily
+        PhotoCache.setUserDAO(new UserDAO());
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             try {
                 java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("crash.log", true));

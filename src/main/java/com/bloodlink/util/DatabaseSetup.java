@@ -42,6 +42,8 @@ public final class DatabaseSetup {
         try {
             if (!tablesExist()) {
                 setup();
+            } else {
+                seedDemoData();
             }
         } catch (Exception e) {
             System.err.println("Warning: Database auto-initialization error: " + e.getMessage());
@@ -134,6 +136,14 @@ public final class DatabaseSetup {
                         "01700000018", "Dhaka", BloodGroup.AB_POSITIVE, LocalDate.of(1996, 9, 27), 77,
                         null, AvailabilityStatus.AVAILABLE, 0);
 
+                upsertDonor(connection, "Woasif Mehmud Issmam", "issmam@bloodlink.local",
+                        "01700000019", "Dhaka", BloodGroup.O_POSITIVE, LocalDate.of(1998, 5, 20), 75,
+                        LocalDate.now().minusDays(100), AvailabilityStatus.AVAILABLE, 5);
+
+                upsertDonor(connection, "Woasif Mehmud Issmam", "woasif0@example.com",
+                        "01700000020", "Dhaka", BloodGroup.O_POSITIVE, LocalDate.of(1998, 5, 20), 75,
+                        LocalDate.now().minusDays(100), AvailabilityStatus.AVAILABLE, 5);
+
                 if (!demoRequestsExist(connection, requesterId)) {
                     long pending = insertRequest(connection, requesterId, BloodGroup.AB_NEGATIVE, 2, Urgency.CRITICAL,
                             "Dhaka Medical College Hospital", "Dhaka", LocalDate.now().plusDays(1),
@@ -193,6 +203,8 @@ public final class DatabaseSetup {
                     // reference hospital). Self-contained -- skips gracefully if the
                     // hospitals table isn't populated yet.
                     seedAdvancedFeatureDemoData(connection, requesterId, donorOPos, donorONeg, donorAPos, donorANeg);
+                    
+                    seedHistoricalRequests(connection, requesterId, donorOPos, donorAPos, donorBPos);
 
                     insertAudit(connection, adminId, "SEED_DATA", "SYSTEM", null,
                             "Inserted BloodLink demonstration accounts and lifecycle data");
@@ -313,6 +325,32 @@ public final class DatabaseSetup {
             statement.executeUpdate();
         }
     }
+    
+    private static void seedHistoricalRequests(Connection connection, long requesterId, long d1, long d2, long d3) throws SQLException {
+        // Generate 30 requests spread across the last 6 months for chart visualization
+        java.util.Random rnd = new java.util.Random(42);
+        BloodGroup[] groups = BloodGroup.values();
+        Urgency[] urgencies = Urgency.values();
+        String[] hospitals = {"Dhaka Medical College Hospital", "Square Hospital", "United Hospital", "Evercare Hospital Dhaka", "BIRDEM General Hospital"};
+        
+        for (int i = 0; i < 30; i++) {
+            int daysAgo = rnd.nextInt(180);
+            LocalDate date = LocalDate.now().minusDays(daysAgo);
+            BloodGroup group = groups[rnd.nextInt(groups.length)];
+            Urgency urgency = urgencies[rnd.nextInt(urgencies.length)];
+            String hospital = hospitals[rnd.nextInt(hospitals.length)];
+            int units = rnd.nextInt(3) + 1;
+            
+            long reqId = insertRequest(connection, requesterId, group, units, urgency, hospital, "Dhaka", date.plusDays(2), "[DEMO CHART] Historical request " + i, RequestStatus.FULFILLED, (i%3==0?d1:(i%3==1?d2:d3)));
+            
+            // Backdate the created_at timestamp
+            try (PreparedStatement stmt = connection.prepareStatement("UPDATE blood_requests SET created_at = ? WHERE id = ?")) {
+                stmt.setTimestamp(1, Timestamp.valueOf(date.atStartOfDay()));
+                stmt.setLong(2, reqId);
+                stmt.executeUpdate();
+            }
+        }
+    }
 
     /** Returns null (not an exception) if the hospitals table isn't populated yet -- this demo addition must never fail the rest of seeding over it. */
     private static Long findHospitalId(Connection connection, String name, String district) throws SQLException {
@@ -400,7 +438,7 @@ public final class DatabaseSetup {
 
     private static boolean demoRequestsExist(Connection connection, long requesterId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT COUNT(*) FROM blood_requests WHERE requester_id=? AND notes LIKE '[DEMO]%'")) {
+                "SELECT COUNT(*) FROM blood_requests WHERE requester_id=? AND notes LIKE '[DEMO CHART]%'")) {
             statement.setLong(1, requesterId);
             try (ResultSet rs = statement.executeQuery()) { rs.next(); return rs.getLong(1) > 0; }
         }

@@ -15,8 +15,11 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.web.WebView?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -145,28 +148,15 @@
                     <HBox spacing="10" alignment="CENTER_LEFT">
                         <Label text="Requests waiting for your response" styleClass="section-title"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button text="Refresh" styleClass="button-ghost" onAction="#refreshAll"/>
+                        <Button text="Detect my area" styleClass="button-secondary" onAction="#detectArea"/>
                         <Button text="Decline" styleClass="button-danger-outline" onAction="#declineSelected"/>
                         <Button text="Accept" styleClass="button-secondary" onAction="#acceptSelected"/>
                         <Button text="Confirm Donated" styleClass="button-primary" onAction="#confirmDonated"/>
                     </HBox>
-                    <TableView fx:id="matchTable" VBox.vgrow="ALWAYS">
-                        <columns>
-                            <TableColumn fx:id="requestIdColumn" text="ID" prefWidth="50"/>
-                            <TableColumn fx:id="matchBloodColumn" text="Group" prefWidth="70"/>
-                            <TableColumn fx:id="hospitalColumn" text="Hospital" prefWidth="200"/>
-                            <TableColumn fx:id="matchDistrictColumn" text="District" prefWidth="100"/>
-                            <TableColumn fx:id="urgencyColumn" text="Urgency" prefWidth="90"/>
-                            <TableColumn fx:id="deadlineColumn" text="Deadline" prefWidth="100"/>
-                            <TableColumn fx:id="requestStatusColumn" text="Request" prefWidth="100"/>
-                            <TableColumn fx:id="matchStatusColumn" text="Your Response" prefWidth="120"/>
-                            <TableColumn fx:id="scoreColumn" text="Score" prefWidth="70"/>
-                            <TableColumn fx:id="distanceColumn" text="Distance" prefWidth="90"/>
-                            <TableColumn fx:id="requesterRatingColumn" text="Requester Rating" prefWidth="120"/>
-                            <TableColumn fx:id="progressColumn" text="Progress" prefWidth="100"/>
-                            <TableColumn fx:id="handshakeColumn" text="Handshake" prefWidth="150"/>
-                        </columns>
-                    </TableView>
+                    <SplitPane VBox.vgrow="ALWAYS" dividerPositions="0.4">
+                        <ListView fx:id="matchList" />
+                        <WebView fx:id="mapView" />
+                    </SplitPane>
                 </VBox>
             </Tab>
 

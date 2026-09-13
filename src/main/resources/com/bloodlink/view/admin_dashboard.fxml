@@ -22,6 +22,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.image.ImageView?>
+<?import com.bloodlink.view.components.ActivityFeed?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -99,6 +100,11 @@
                             </VBox>
                         </HBox>
 
+                        <VBox spacing="10" styleClass="content-card">
+                            <Label text="Live Activity Feed" styleClass="section-title"/>
+                            <ActivityFeed fx:id="activityFeed" prefHeight="250"/>
+                        </VBox>
+
                         <Label fx:id="statusMessageLabel" styleClass="helper-text" text=""/>
                     </VBox>
                 </ScrollPane>
@@ -109,7 +115,7 @@
                     <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
                     <HBox spacing="10" alignment="CENTER_LEFT">
                         <TextField fx:id="userSearchField" promptText="Search name, email, or district..." HBox.hgrow="ALWAYS"/>
-                        <javafx.scene.control.CheckBox fx:id="pendingUsersOnlyCheck" text="Pending Approval Only"/>
+                        <javafx.scene.control.CheckBox fx:id="pendingUsersOnlyCheck" text="Pending Approval Only" selected="true"/>
                         <Button text="Approve" styleClass="button-primary" onAction="#approveSelectedUser"/>
                         <Button text="Suspend" styleClass="button-danger-outline" onAction="#suspendSelectedUser"/>
                         <Button text="Activate" styleClass="button-secondary" onAction="#activateSelectedUser"/>

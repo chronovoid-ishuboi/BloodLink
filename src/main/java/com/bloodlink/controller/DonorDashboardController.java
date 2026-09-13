@@ -15,7 +15,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.shape.Circle;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -25,6 +27,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DonorDashboardController {
     @FXML private ImageView appLogoView;
@@ -50,20 +55,8 @@ public final class DonorDashboardController {
     @FXML private TableColumn<HospitalWithDistance, String> nearbyHospitalPhoneColumn;
     @FXML private TableColumn<HospitalWithDistance, String> nearbyHospitalDistanceColumn;
 
-    @FXML private TableView<DonorMatchView> matchTable;
-    @FXML private TableColumn<DonorMatchView, Long> requestIdColumn;
-    @FXML private TableColumn<DonorMatchView, BloodGroup> matchBloodColumn;
-    @FXML private TableColumn<DonorMatchView, String> hospitalColumn;
-    @FXML private TableColumn<DonorMatchView, String> matchDistrictColumn;
-    @FXML private TableColumn<DonorMatchView, Urgency> urgencyColumn;
-    @FXML private TableColumn<DonorMatchView, LocalDate> deadlineColumn;
-    @FXML private TableColumn<DonorMatchView, RequestStatus> requestStatusColumn;
-    @FXML private TableColumn<DonorMatchView, MatchStatus> matchStatusColumn;
-    @FXML private TableColumn<DonorMatchView, Double> scoreColumn;
-    @FXML private TableColumn<DonorMatchView, String> distanceColumn;
-    @FXML private TableColumn<DonorMatchView, String> requesterRatingColumn;
-    @FXML private TableColumn<DonorMatchView, String> progressColumn;
-    @FXML private TableColumn<DonorMatchView, String> handshakeColumn;
+    @FXML private ListView<DonorMatchView> matchList;
+    @FXML private WebView mapView;
 
     @FXML private TableView<DonationRecord> donationTable;
     @FXML private TableColumn<DonationRecord, LocalDate> donationDateColumn;
@@ -152,22 +145,75 @@ public final class DonorDashboardController {
         refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(seconds), event -> refreshAll()));
         refreshTimeline.setCycleCount(Timeline.INDEFINITE);
         refreshTimeline.play();
+        
+        initializeMap();
     }
 
+    private void initializeMap() {
+        if (mapView != null) {
+            java.net.URL mapUrl = getClass().getResource("/com/bloodlink/view/map.html");
+            if (mapUrl != null) {
+                mapView.getEngine().load(mapUrl.toExternalForm());
+                mapView.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+                    if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
+                        updateMapMarkers();
+                    }
+                });
+                matchList.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+                    updateMapMarkers();
+                });
+            }
+        }
+    }
+
+    private void updateMapMarkers() {
+        if (mapView == null || mapView.getEngine().getLoadWorker().getState() != javafx.concurrent.Worker.State.SUCCEEDED) return;
+        mapView.getEngine().executeScript("clearMarkers();");
+        DonorMatchView selected = matchList.getSelectionModel().getSelectedItem();
+        if (selected != null && selected.hospitalName() != null) {
+            // Use hospital district as proxy for coordinates (since we don't have real DB coords in this demo)
+            // Ideally, we'd query the Hospital model for lat/lng
+            // We'll just put a pin in the center of Bangladesh for now if no coordinates are found
+            // Or better, let's look up the hospital object if possible
+            double lat = 23.8103, lng = 90.4125; 
+            try {
+                Hospital h = hospitalDAO.findByName(selected.hospitalName());
+                if (h != null) {
+                    lat = h.latitude();
+                    lng = h.longitude();
+                }
+            } catch (SQLException e) {}
+            
+            String title = selected.hospitalName().replace("'", "\\'");
+            String script = String.format("addMarker(%f, %f, '%s', '%s', '%s'); fitBounds();", 
+                                lat, lng, title, selected.district(), "Hospital");
+            mapView.getEngine().executeScript(script);
+            mapView.getEngine().executeScript(String.format("setView(%f, %f, 13);", lat, lng));
+        }
+    }
+
+    @FXML private void detectArea() {
+        new Thread(() -> {
+            Optional<GeoIPService.GeoLocation> locOpt = GeoIPService.detectLocation();
+            javafx.application.Platform.runLater(() -> {
+                if (locOpt.isPresent()) {
+                    GeoIPService.GeoLocation loc = locOpt.get();
+                    if (mapView != null && mapView.getEngine().getLoadWorker().getState() == javafx.concurrent.Worker.State.SUCCEEDED) {
+                        String script = String.format("addMarker(%f, %f, 'My Area', '%s', 'Donor'); setView(%f, %f, 12);",
+                            loc.lat(), loc.lon(), loc.city().replace("'", "\\'"), loc.lat(), loc.lon());
+                        mapView.getEngine().executeScript(script);
+                    }
+                    com.bloodlink.util.AlertUtil.info("Area Detected", "Detected location: " + loc.city() + ", " + loc.region());
+                } else {
+                    com.bloodlink.util.AlertUtil.error("Detection Failed", "Could not detect area from IP.");
+                }
+            });
+        }).start();
+    }
+
+
     private void configureTables() {
-        requestIdColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().requestId()));
-        matchBloodColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().bloodGroup()));
-        hospitalColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().hospitalName()));
-        matchDistrictColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().district()));
-        urgencyColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().urgency()));
-        deadlineColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().deadline()));
-        requestStatusColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().requestStatus()));
-        matchStatusColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().matchStatus()));
-        scoreColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().score()));
-        distanceColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatDistance(v.getValue().distanceKm())));
-        requesterRatingColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatRating(v.getValue().requesterRating(), v.getValue().requesterReviewCount())));
-        progressColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().unitsFulfilled() + " / " + v.getValue().unitsNeeded() + " units"));
-        handshakeColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatHandshake(v.getValue())));
+
         donationDateColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().donationDate()));
         donationHospitalColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().hospitalName()));
         donationBloodColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().bloodGroup()));
@@ -176,12 +222,11 @@ public final class DonorDashboardController {
         donationReviewColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(
                 v.getValue().requestId() != null && reviewedRequestIds.contains(v.getValue().requestId()) ? "Rated" : "Not rated yet"));
 
-        urgencyColumn.setCellFactory(ChipTableCells.forValues());
-        requestStatusColumn.setCellFactory(ChipTableCells.forValues());
-        matchStatusColumn.setCellFactory(ChipTableCells.forValues());
+
         donationVerifiedColumn.setCellFactory(ChipTableCells.forValues());
 
-        matchTable.setPlaceholder(emptyState("No matching emergency requests are waiting for you."));
+        matchList.setPlaceholder(emptyState("No matching emergency requests are waiting for you."));
+        matchList.setCellFactory(lv -> new com.bloodlink.view.components.DonorMatchCell());
         donationTable.setPlaceholder(emptyState("No verified donation history is available yet."));
         notificationList.setPlaceholder(emptyState("You have no notifications."));
         nearbyHospitalNameColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().hospital().name()));
@@ -201,14 +246,7 @@ public final class DonorDashboardController {
         return averageRating == null ? "No reviews yet" : String.format("\u2605 %.1f (%d)", averageRating, reviewCount);
     }
 
-    /** What's actually happening on this donor's own handshake for this match, regardless of the request's overall status. */
-    private String formatHandshake(DonorMatchView match) {
-        if (match.matchStatus() != MatchStatus.ACCEPTED) return "—";
-        if (match.donorConfirmed() && match.requesterConfirmed()) return "Complete";
-        if (match.donorConfirmed()) return "Waiting on requester";
-        if (match.requesterConfirmed()) return "Waiting on you";
-        return "Awaiting both confirmations";
-    }
+
 
     /**
      * Same searchable-picker pattern as the requester's hospital field, repurposed so
@@ -423,7 +461,7 @@ public final class DonorDashboardController {
     private record HospitalWithDistance(Hospital hospital, Double distanceKm) { }
 
     private void applyDashboardData(DonorDashboardData data) {
-        matchTable.setItems(FXCollections.observableArrayList(data.matches()));
+        matchList.setItems(FXCollections.observableArrayList(data.matches()));
         donationTable.setItems(FXCollections.observableArrayList(data.donations()));
         notificationList.setItems(FXCollections.observableArrayList(data.notifications()));
         unreadLabel.setText(String.valueOf(data.unreadCount()));
@@ -466,7 +504,7 @@ public final class DonorDashboardController {
                                       java.util.List<HospitalWithDistance> nearbyHospitals) { }
 
     @FXML private void acceptSelected() {
-        DonorMatchView selected = matchTable.getSelectionModel().getSelectedItem();
+        DonorMatchView selected = matchList.getSelectionModel().getSelectedItem();
         if (selected == null) { AlertUtil.warning("No match selected", "Select a request first."); return; }
         if (selected.matchStatus() != MatchStatus.NOTIFIED) { AlertUtil.warning("Already answered", "This match is no longer awaiting a response."); return; }
         if (!AlertUtil.confirm("Accept request", "Accept blood request #" + selected.requestId() + "?")) return;
@@ -475,7 +513,7 @@ public final class DonorDashboardController {
     }
 
     @FXML private void declineSelected() {
-        DonorMatchView selected = matchTable.getSelectionModel().getSelectedItem();
+        DonorMatchView selected = matchList.getSelectionModel().getSelectedItem();
         if (selected == null) { AlertUtil.warning("No match selected", "Select a request first."); return; }
         if (!AlertUtil.confirm("Decline match", "Decline request #" + selected.requestId() + "?")) return;
         showResult(requestService.decline(selected.requestId(), donor.getId()));
@@ -492,7 +530,7 @@ public final class DonorDashboardController {
      * visible is not itself authorization.
      */
     @FXML private void confirmDonated() {
-        DonorMatchView selected = matchTable.getSelectionModel().getSelectedItem();
+        DonorMatchView selected = matchList.getSelectionModel().getSelectedItem();
         if (selected == null) { AlertUtil.warning("No match selected", "Select a request first."); return; }
         if (selected.matchStatus() != MatchStatus.ACCEPTED
                 || !(selected.requestStatus() == RequestStatus.ACCEPTED || selected.requestStatus() == RequestStatus.PARTIALLY_FULFILLED)) {

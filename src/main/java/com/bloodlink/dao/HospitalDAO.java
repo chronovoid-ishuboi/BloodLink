@@ -63,6 +63,17 @@ public final class HospitalDAO {
         }
     }
 
+    public Hospital findByName(String name) throws SQLException {
+        if (name == null || name.isBlank()) return null;
+        String sql = "SELECT id,name,district,area,address,latitude,longitude,phone,active FROM hospitals WHERE name=? LIMIT 1";
+        try (Connection connection = DBConnection.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, name.trim());
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? mapHospital(rs) : null;
+            }
+        }
+    }
+
     /**
      * The coordinate used to approximate a donor's location: the first active
      * hospital seeded for that district. Real data, coarse precision -- see

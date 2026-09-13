@@ -81,7 +81,7 @@ public final class AdminDashboardController {
 
     @FXML private TableView<AuditEntry> auditTable;
     @FXML private Label auditPageLabel;
-    @FXML private TableColumn<AuditEntry, LocalDateTime> auditTimeColumn;
+    @FXML private TableColumn<AuditEntry, String> auditTimeColumn;
     @FXML private TableColumn<AuditEntry, String> auditActorColumn;
     @FXML private TableColumn<AuditEntry, String> auditActionColumn;
     @FXML private TableColumn<AuditEntry, String> auditEntityColumn;
@@ -184,11 +184,11 @@ public final class AdminDashboardController {
         districtDemandAvailableColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().availableDonors()));
         districtDemandGapColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().gap()));
 
-        auditTimeColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().createdAt()));
+        auditTimeColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatRelativeTime(v.getValue().createdAt())));
         auditActorColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().actorName() == null ? "System" : v.getValue().actorName()));
         auditActionColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().action()));
         auditEntityColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().entityType() + (v.getValue().entityId() == null ? "" : " #" + v.getValue().entityId())));
-        auditDetailsColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().details()));
+        auditDetailsColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(truncateNote(v.getValue().details())));
 
         userRoleColumn.setCellFactory(ChipTableCells.forValues());
         userApprovedColumn.setCellFactory(ChipTableCells.forValues());
@@ -207,6 +207,24 @@ public final class AdminDashboardController {
         Label label = new Label(text);
         label.getStyleClass().add("empty-state");
         return label;
+    }
+
+    private String truncateNote(String note) {
+        if (note == null) return "";
+        if (note.length() <= 30) return note;
+        return note.substring(0, 27) + "...";
+    }
+
+    private String formatRelativeTime(LocalDateTime time) {
+        if (time == null) return "Unknown";
+        java.time.Duration diff = java.time.Duration.between(time, LocalDateTime.now());
+        long days = diff.toDays();
+        long hours = diff.toHours();
+        long mins = diff.toMinutes();
+        if (days > 0) return days + "d ago";
+        if (hours > 0) return hours + "h ago";
+        if (mins > 0) return mins + "m ago";
+        return "Just now";
     }
 
     /**

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>BloodLink Map</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f7fbfa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+            border-radius: 8px;
+        }
+        /* Custom map popup styles */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(20, 62, 68, 0.15);
+            padding: 2px;
+        }
+        .leaflet-popup-content {
+            margin: 12px;
+            line-height: 1.4;
+        }
+        .popup-title {
+            font-weight: 700;
+            color: #164e54;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .popup-subtitle {
+            color: #6f8387;
+            font-size: 12px;
+        }
+        .popup-badge {
+            display: inline-block;
+            background-color: #dce9e6;
+            color: #113d42;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        var map = L.map('map').setView([23.8103, 90.4125], 7); // Default to Bangladesh
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        var markers = [];
+
+        // Will be called by Java
+        function clearMarkers() {
+            for (var i = 0; i < markers.length; i++) {
+                map.removeLayer(markers[i]);
+            }
+            markers = [];
+        }
+
+        // Will be called by Java
+        function addMarker(lat, lng, title, subtitle, badgeText) {
+            var marker = L.marker([lat, lng]).addTo(map);
+            
+            var popupContent = '<div class="popup-title">' + title + '</div>';
+            if (subtitle) {
+                popupContent += '<div class="popup-subtitle">' + subtitle + '</div>';
+            }
+            if (badgeText) {
+                popupContent += '<div class="popup-badge">' + badgeText + '</div>';
+            }
+            
+            marker.bindPopup(popupContent);
+            markers.push(marker);
+        }
+
+        // Will be called by Java
+        function fitBounds() {
+            if (markers.length === 0) return;
+            var group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+
+        // Will be called by Java
+        function setView(lat, lng, zoom) {
+            map.setView([lat, lng], zoom);
+        }
+    </script>
+</body>
+</html>

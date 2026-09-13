@@ -170,7 +170,7 @@ public final class RequestDAO {
         return rows;
     }
 
-    private record RequesterMatchRow(long requestId, long requesterId, BloodGroup group, String hospitalName, String district,
+    private record RequesterMatchRow(long requestId, long requesterId, String requesterName, BloodGroup group, String hospitalName, String district,
                                      Urgency urgency, LocalDate deadline, RequestStatus status, MatchStatus matchStatus,
                                      double score, Double hospitalLat, Double hospitalLon, int unitsNeeded, int unitsFulfilled,
                                      boolean donorConfirmed, boolean requesterConfirmed) { }
@@ -186,9 +186,11 @@ public final class RequestDAO {
                 SELECT br.id,br.requester_id,br.blood_group,br.hospital_name,br.district,br.urgency,br.deadline,br.status,
                        br.units_needed,br.units_fulfilled,
                        rm.status AS match_status,rm.match_score,rm.donor_confirmed_at,rm.requester_confirmed_at,
-                       h.latitude AS hospital_latitude, h.longitude AS hospital_longitude
+                       h.latitude AS hospital_latitude, h.longitude AS hospital_longitude,
+                       u.full_name AS requester_name
                 FROM request_matches rm
                 JOIN blood_requests br ON br.id=rm.request_id
+                JOIN users u ON u.id=br.requester_id
                 LEFT JOIN hospitals h ON h.id=br.hospital_id
                 WHERE rm.donor_id=? AND br.status NOT IN ('FULFILLED','CANCELLED')
                   AND NOT (rm.donor_confirmed_at IS NOT NULL AND rm.requester_confirmed_at IS NOT NULL)
@@ -203,7 +205,7 @@ public final class RequestDAO {
                     Double hLat = rs.wasNull() ? null : latVal;
                     double lngVal = rs.getDouble("hospital_longitude");
                     Double hLng = rs.wasNull() ? null : lngVal;
-                    raw.add(new RequesterMatchRow(rs.getLong("id"), rs.getLong("requester_id"), BloodGroup.valueOf(rs.getString("blood_group")),
+                    raw.add(new RequesterMatchRow(rs.getLong("id"), rs.getLong("requester_id"), rs.getString("requester_name"), BloodGroup.valueOf(rs.getString("blood_group")),
                             rs.getString("hospital_name"), rs.getString("district"), Urgency.valueOf(rs.getString("urgency")),
                             rs.getObject("deadline", LocalDate.class), RequestStatus.valueOf(rs.getString("status")),
                             MatchStatus.valueOf(rs.getString("match_status")), rs.getDouble("match_score"),
@@ -221,6 +223,7 @@ public final class RequestDAO {
             ReputationSummary reputation = reputations.getOrDefault(row.requesterId(), ReputationSummary.none(row.requesterId()));
             rows.add(new DonorMatchView(row.requestId(), row.group(), row.hospitalName(), row.district(), row.urgency(),
                     row.deadline(), row.status(), row.matchStatus(), row.score(), distanceKm,
+                    row.requesterId(), row.requesterName(),
                     reputation.hasReviews() ? reputation.averageRating() : null, reputation.reviewCount(),
                     row.unitsNeeded(), row.unitsFulfilled(), row.donorConfirmed(), row.requesterConfirmed()));
         }

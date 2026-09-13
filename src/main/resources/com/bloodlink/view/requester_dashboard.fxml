@@ -14,8 +14,11 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.web.WebView?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -119,6 +122,7 @@
                             <HBox spacing="10" alignment="CENTER_LEFT">
                                 <Label text="Your requests" styleClass="section-title"/>
                                 <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Detect my area" styleClass="button-secondary" onAction="#detectArea"/>
                                 <Button text="Refresh" styleClass="button-ghost" onAction="#refreshAll"/>
                                 <Button text="Rematch" styleClass="button-secondary" onAction="#rematchSelected"/>
                                 <Button text="Confirm Received" styleClass="button-primary" onAction="#confirmReceived"/>
@@ -142,21 +146,10 @@
 
                         <VBox spacing="10" styleClass="content-card">
                             <Label text="Matched donors" styleClass="section-title"/>
-                            <TableView fx:id="matchTable" prefHeight="220">
-                                <columns>
-                                    <TableColumn fx:id="donorNameColumn" text="Donor" prefWidth="150"/>
-                                    <TableColumn fx:id="donorBloodColumn" text="Group" prefWidth="70"/>
-                                    <TableColumn fx:id="donorDistrictColumn" text="District" prefWidth="100"/>
-                                    <TableColumn fx:id="donorPhoneColumn" text="Phone" prefWidth="110"/>
-                                    <TableColumn fx:id="donorBadgeColumn" text="Badge" prefWidth="90"/>
-                                    <TableColumn fx:id="donorRatingColumn" text="Rating" prefWidth="110"/>
-                                    <TableColumn fx:id="donorScoreColumn" text="Score" prefWidth="70"/>
-                                    <TableColumn fx:id="donorDistanceColumn" text="Distance" prefWidth="90"/>
-                                    <TableColumn fx:id="donorMatchStatusColumn" text="Status" prefWidth="90"/>
-                                    <TableColumn fx:id="donorHandshakeColumn" text="Handshake" prefWidth="150"/>
-                                    <TableColumn fx:id="donorReasonColumn" text="Why matched" prefWidth="260"/>
-                                </columns>
-                            </TableView>
+                            <SplitPane prefHeight="220" dividerPositions="0.4">
+                                <ListView fx:id="matchList" />
+                                <WebView fx:id="mapView" />
+                            </SplitPane>
                         </VBox>
 
                         <VBox spacing="10" styleClass="content-card">

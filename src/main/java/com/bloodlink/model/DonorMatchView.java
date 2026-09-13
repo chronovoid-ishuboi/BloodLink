@@ -16,6 +16,7 @@ import java.time.LocalDate;
 public record DonorMatchView(long requestId, BloodGroup bloodGroup, String hospitalName, String district,
                              Urgency urgency, LocalDate deadline, RequestStatus requestStatus,
                              MatchStatus matchStatus, double score, Double distanceKm,
+                             long requesterId, String requesterName,
                              Double requesterRating, long requesterReviewCount,
                              int unitsNeeded, int unitsFulfilled,
                              boolean donorConfirmed, boolean requesterConfirmed) { }

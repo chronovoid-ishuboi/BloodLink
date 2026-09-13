@@ -13,12 +13,15 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.scene.web.WebView;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import com.bloodlink.util.GeoIPService;
 
 public final class RequesterDashboardController {
     @FXML private ImageView appLogoView;
@@ -44,19 +47,9 @@ public final class RequesterDashboardController {
     @FXML private TableColumn<BloodRequest, LocalDate> deadlineColumn;
     @FXML private TableColumn<BloodRequest, RequestStatus> statusColumn;
 
-    @FXML private TableView<MatchCandidate> matchTable;
-    @FXML private TableColumn<MatchCandidate, String> donorNameColumn;
-    @FXML private TableColumn<MatchCandidate, BloodGroup> donorBloodColumn;
-    @FXML private TableColumn<MatchCandidate, String> donorDistrictColumn;
-    @FXML private TableColumn<MatchCandidate, String> donorPhoneColumn;
-    @FXML private TableColumn<MatchCandidate, BadgeTier> donorBadgeColumn;
-    @FXML private TableColumn<MatchCandidate, String> donorRatingColumn;
-    @FXML private TableColumn<MatchCandidate, Double> donorScoreColumn;
-    @FXML private TableColumn<MatchCandidate, String> donorDistanceColumn;
-    @FXML private TableColumn<MatchCandidate, MatchStatus> donorMatchStatusColumn;
-    @FXML private TableColumn<MatchCandidate, String> donorHandshakeColumn;
-    @FXML private TableColumn<MatchCandidate, String> donorReasonColumn;
-
+    @FXML private ListView<MatchCandidate> matchList;
+    @FXML private WebView mapView;
+    
     @FXML private TableView<RequestStatusHistoryEntry> historyTable;
     @FXML private TableColumn<RequestStatusHistoryEntry, RequestStatus> historyFromColumn;
     @FXML private TableColumn<RequestStatusHistoryEntry, RequestStatus> historyToColumn;
@@ -127,7 +120,64 @@ public final class RequesterDashboardController {
         refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(seconds), event -> refreshAll()));
         refreshTimeline.setCycleCount(Timeline.INDEFINITE);
         refreshTimeline.play();
+        
+        initializeMap();
     }
+
+    private void initializeMap() {
+        if (mapView != null) {
+            java.net.URL mapUrl = getClass().getResource("/com/bloodlink/view/map.html");
+            if (mapUrl != null) {
+                mapView.getEngine().load(mapUrl.toExternalForm());
+                mapView.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+                    if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
+                        updateMapMarkers();
+                    }
+                });
+                matchList.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+                    updateMapMarkers();
+                });
+            }
+        }
+    }
+
+    private void updateMapMarkers() {
+        if (mapView == null || mapView.getEngine().getLoadWorker().getState() != javafx.concurrent.Worker.State.SUCCEEDED) return;
+        mapView.getEngine().executeScript("clearMarkers();");
+        MatchCandidate selected = matchList.getSelectionModel().getSelectedItem();
+        if (selected != null && selected.donorName() != null) {
+            // For donor location, we use their district for now.
+            // Since we don't have lat/lng in DB for donors, we can just center on Bangladesh
+            // and log the match. A better approach would be geocoding the district.
+            double lat = 23.8103, lng = 90.4125; 
+            
+            String title = selected.donorName().replace("'", "\\'");
+            String script = String.format("addMarker(%f, %f, '%s', '%s', '%s'); fitBounds();", 
+                                lat, lng, title, selected.district(), "Donor");
+            mapView.getEngine().executeScript(script);
+            mapView.getEngine().executeScript(String.format("setView(%f, %f, 13);", lat, lng));
+        }
+    }
+
+    @FXML private void detectArea() {
+        new Thread(() -> {
+            Optional<GeoIPService.GeoLocation> locOpt = GeoIPService.detectLocation();
+            javafx.application.Platform.runLater(() -> {
+                if (locOpt.isPresent()) {
+                    GeoIPService.GeoLocation loc = locOpt.get();
+                    if (mapView != null && mapView.getEngine().getLoadWorker().getState() == javafx.concurrent.Worker.State.SUCCEEDED) {
+                        String script = String.format("addMarker(%f, %f, 'My Area', '%s', 'Requester'); setView(%f, %f, 12);",
+                            loc.lat(), loc.lon(), loc.city().replace("'", "\\'"), loc.lat(), loc.lon());
+                        mapView.getEngine().executeScript(script);
+                    }
+                    com.bloodlink.util.AlertUtil.info("Area Detected", "Detected location: " + loc.city() + ", " + loc.region());
+                } else {
+                    com.bloodlink.util.AlertUtil.error("Detection Failed", "Could not detect area from IP.");
+                }
+            });
+        }).start();
+    }
+
 
     /**
      * Searchable hospital picker: an editable ComboBox backed by HospitalDAO.search().
@@ -174,17 +224,6 @@ public final class RequesterDashboardController {
         districtColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().district()));
         deadlineColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().deadline()));
         statusColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().status()));
-        donorNameColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().donorName()));
-        donorBloodColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().bloodGroup()));
-        donorDistrictColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().district()));
-        donorPhoneColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().phone()));
-        donorBadgeColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().badgeTier()));
-        donorRatingColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatRating(v.getValue().averageRating(), v.getValue().reviewCount())));
-        donorScoreColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().score()));
-        donorDistanceColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatDistance(v.getValue().distanceKm())));
-        donorMatchStatusColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().matchStatus()));
-        donorHandshakeColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(formatHandshake(v.getValue())));
-        donorReasonColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().reason()));
         historyFromColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().fromStatus()));
         historyToColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(v.getValue().toStatus()));
         historyActorColumn.setCellValueFactory(v -> new ReadOnlyObjectWrapper<>(
@@ -194,32 +233,14 @@ public final class RequesterDashboardController {
 
         urgencyColumn.setCellFactory(ChipTableCells.forValues());
         statusColumn.setCellFactory(ChipTableCells.forValues());
-        donorBadgeColumn.setCellFactory(ChipTableCells.forValues());
-        donorMatchStatusColumn.setCellFactory(ChipTableCells.forValues());
         historyFromColumn.setCellFactory(ChipTableCells.forValues());
         historyToColumn.setCellFactory(ChipTableCells.forValues());
 
         requestTable.setPlaceholder(emptyState("You have not submitted a blood request yet."));
-        matchTable.setPlaceholder(emptyState("Select a request to view ranked donor matches."));
+        matchList.setPlaceholder(emptyState("Select a request to view ranked donor matches."));
+        matchList.setCellFactory(lv -> new com.bloodlink.view.components.RequesterMatchCell());
         historyTable.setPlaceholder(emptyState("Select a request to view its lifecycle history."));
         notificationList.setPlaceholder(emptyState("You have no notifications."));
-    }
-
-    private String formatDistance(Double distanceKm) {
-        return distanceKm == null ? "—" : String.format("~%.1f km", distanceKm);
-    }
-
-    private String formatRating(Double averageRating, long reviewCount) {
-        return averageRating == null ? "No reviews yet" : String.format("\u2605 %.1f (%d)", averageRating, reviewCount);
-    }
-
-    /** What's actually happening for this specific donor's handshake, so the requester knows what to do next. */
-    private String formatHandshake(MatchCandidate candidate) {
-        if (candidate.matchStatus() != MatchStatus.ACCEPTED) return "—";
-        if (candidate.donorConfirmed() && candidate.requesterConfirmed()) return "Complete";
-        if (candidate.requesterConfirmed()) return "Waiting on donor";
-        if (candidate.donorConfirmed()) return "Waiting on you";
-        return "Awaiting both confirmations";
     }
 
     private Label emptyState(String text) {
@@ -333,7 +354,7 @@ public final class RequesterDashboardController {
      */
     @FXML private void confirmReceived() {
         BloodRequest selectedRequest = requestTable.getSelectionModel().getSelectedItem();
-        MatchCandidate selectedDonor = matchTable.getSelectionModel().getSelectedItem();
+        MatchCandidate selectedDonor = matchList.getSelectionModel().getSelectedItem();
         if (selectedRequest == null || selectedDonor == null) {
             AlertUtil.warning("No donor selected", "Select the specific donor row (in Matched Donors) you want to confirm.");
             return;
@@ -358,7 +379,7 @@ public final class RequesterDashboardController {
      */
     @FXML private void rateDonor() {
         BloodRequest selectedRequest = requestTable.getSelectionModel().getSelectedItem();
-        MatchCandidate selectedDonor = matchTable.getSelectionModel().getSelectedItem();
+        MatchCandidate selectedDonor = matchList.getSelectionModel().getSelectedItem();
         if (selectedRequest == null || selectedDonor == null) {
             AlertUtil.warning("No donor selected", "Select the specific donor row (in Matched Donors) you want to rate.");
             return;
@@ -417,7 +438,7 @@ public final class RequesterDashboardController {
 
     private void loadMatches(BloodRequest request) {
         if (request == null) {
-            matchTable.getItems().clear();
+            matchList.getItems().clear();
             historyTable.getItems().clear();
             return;
         }
@@ -425,7 +446,7 @@ public final class RequesterDashboardController {
         BackgroundTasks.run(() -> new MatchDetails(requestDAO.findMatchesForRequest(requestId),
                         requestDAO.findStatusHistory(requestId, requester.getId())),
                 details -> {
-                    matchTable.setItems(FXCollections.observableArrayList(details.matches()));
+                    matchList.setItems(FXCollections.observableArrayList(details.matches()));
                     historyTable.setItems(FXCollections.observableArrayList(details.history()));
                 },
                 error -> requestMessageLabel.setText("Could not load request details: " + error.getMessage()));

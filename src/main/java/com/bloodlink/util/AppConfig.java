@@ -17,6 +17,16 @@ public final class AppConfig {
         } catch (IOException e) {
             throw new ExceptionInInitializerError(e);
         }
+        java.io.File local = new java.io.File("local.properties");
+        if (local.exists()) {
+            try (java.io.InputStream in = new java.io.FileInputStream(local)) {
+                Properties localProps = new Properties();
+                localProps.load(in);
+                for (String k : localProps.stringPropertyNames()) {
+                    PROPERTIES.setProperty(k, localProps.getProperty(k));
+                }
+            } catch (Exception ignored) { }
+        }
     }
 
     private AppConfig() { }

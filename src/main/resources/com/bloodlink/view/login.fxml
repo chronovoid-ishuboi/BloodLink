@@ -15,11 +15,11 @@
 <StackPane xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.bloodlink.controller.LoginController"
-           styleClass="app-background"
+           styleClass="auth-background"
            stylesheets="@../css/theme.css"
            prefWidth="1000" prefHeight="700">
 
-    <VBox spacing="22" styleClass="content-card" maxWidth="460" maxHeight="-Infinity" alignment="CENTER">
+    <VBox spacing="22" styleClass="auth-card" maxWidth="460" maxHeight="-Infinity" alignment="CENTER">
         <padding><Insets top="36" right="36" bottom="36" left="36"/></padding>
 
         <VBox spacing="4" alignment="CENTER">
