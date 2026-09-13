@@ -1,6 +1,5 @@
 package com.bloodlink.dao;
 
-import com.bloodlink.model.AdminUserRow;
 import com.bloodlink.model.DashboardStats;
 import com.bloodlink.model.DemandRow;
 import com.bloodlink.util.DatabaseSetup;
@@ -30,9 +29,9 @@ class AdminDAOTest {
         assertNotNull(demandRows);
         assertFalse(demandRows.isEmpty());
 
-        var users = adminDAO.findUsers("", 0);
+        var users = adminDAO.findUsers("", 1, false);
         assertNotNull(users);
-        assertFalse(users.items().isEmpty());
+        assertTrue(users.items().stream().anyMatch(u -> u.id() == 1), "Should find admin");
 
         var monthly = adminDAO.monthlyRequests(6);
         assertNotNull(monthly);

@@ -4,9 +4,11 @@ import com.bloodlink.dao.AdminDAO;
 import com.bloodlink.dao.PagedResult;
 import com.bloodlink.model.*;
 import com.bloodlink.service.AdminService;
+import com.bloodlink.service.ProfileService;
 import com.bloodlink.service.RequestService;
 import com.bloodlink.service.ServiceResult;
 import com.bloodlink.util.*;
+import com.bloodlink.util.LogoManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -14,6 +16,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 
 import java.sql.SQLException;
@@ -25,6 +28,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AdminDashboardController {
+    @FXML private ImageView appLogoView;
+    @FXML private ImageView profilePhotoView;
     @FXML private Label welcomeLabel;
     @FXML private Label totalDonorsLabel;
     @FXML private Label pendingRequestsLabel;
@@ -36,6 +41,7 @@ public final class AdminDashboardController {
     @FXML private PieChart statusChart;
 
     @FXML private TextField userSearchField;
+    @FXML private javafx.scene.control.CheckBox pendingUsersOnlyCheck;
     @FXML private Label userPageLabel;
     @FXML private TableView<AdminUserRow> userTable;
     @FXML private TableColumn<AdminUserRow, Long> userIdColumn;
@@ -98,20 +104,53 @@ public final class AdminDashboardController {
 
     @FXML private void initialize() {
         if (!(SessionManager.getInstance().getCurrentUser() instanceof Admin currentAdmin)) {
-            SceneManager.showLogin(); return;
+            throw new IllegalStateException("AdminDashboardController loaded without an active Admin session.");
         }
-        admin = currentAdmin;
-        welcomeLabel.setText("Administrator — " + admin.getFullName());
+        this.admin = currentAdmin;
+        welcomeLabel.setText("Admin: " + admin.getFullName());
+        LogoManager.applyLogo(appLogoView);
+        new ProfileService().loadPhoto(admin.getId()).ifPresent(bytes -> {
+            try {
+                profilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes)));
+            } catch (Exception ignored) {}
+        });
         PushClient.getInstance().connect(admin.getId());
         PushClient.getInstance().onRefresh(this::refreshAll);
         configureTables();
         userSearchField.textProperty().addListener((obs, oldValue, newValue) -> { userPage = 1; loadUsers(); });
         requestSearchField.textProperty().addListener((obs, oldValue, newValue) -> { requestPage = 1; loadRequests(); });
+        pendingUsersOnlyCheck.selectedProperty().addListener((obs, oldValue, newValue) -> { userPage = 1; loadUsers(); });
         refreshAll();
         int seconds = Math.max(8, AppConfig.getInt("ui.auto-refresh-seconds"));
         refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(seconds), event -> refreshAll()));
         refreshTimeline.setCycleCount(Timeline.INDEFINITE);
         refreshTimeline.play();
+    }
+
+    @FXML private void uploadLogo() {
+        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        fileChooser.setTitle("Select Application Logo");
+        fileChooser.getExtensionFilters().addAll(
+                new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
+        );
+        java.io.File selectedFile = fileChooser.showOpenDialog(welcomeLabel.getScene().getWindow());
+        if (selectedFile != null) {
+            try {
+                LogoManager.updateLogo(selectedFile);
+                AlertUtil.info("Logo Updated", "The application logo has been updated successfully.");
+            } catch (java.io.IOException e) {
+                AlertUtil.error("Error", "Could not update the logo: " + e.getMessage());
+            }
+        }
+    }
+
+    @FXML private void resetLogo() {
+        try {
+            LogoManager.updateLogo(null);
+            AlertUtil.info("Logo Reset", "The application logo has been reset to the default SVG.");
+        } catch (java.io.IOException e) {
+            AlertUtil.error("Error", "Could not reset the logo: " + e.getMessage());
+        }
     }
 
     private void configureTables() {
@@ -181,18 +220,19 @@ public final class AdminDashboardController {
         refreshInFlight = true;
         String userSearch = userSearchField.getText();
         String requestSearch = requestSearchField.getText();
-        BackgroundTasks.run(() -> loadDashboardData(userSearch, requestSearch),
+        boolean pendingUsersOnly = pendingUsersOnlyCheck.isSelected();
+        BackgroundTasks.run(() -> loadDashboardData(userSearch, requestSearch, pendingUsersOnly),
                 data -> { applyDashboardData(data); refreshInFlight = false; },
                 error -> { statusMessageLabel.setText("Refresh failed: " + error.getMessage()); refreshInFlight = false; });
     }
 
-    private AdminDashboardData loadDashboardData(String userSearch, String requestSearch) throws SQLException {
+    private AdminDashboardData loadDashboardData(String userSearch, String requestSearch, boolean pendingUsersOnly) throws SQLException {
         return new AdminDashboardData(
                 adminDAO.loadStats(),
                 adminDAO.requestsByBloodGroup(),
                 adminDAO.monthlyRequests(6),
                 adminDAO.requestsByStatus(),
-                adminDAO.findUsers(userSearch, userPage),
+                adminDAO.findUsers(userSearch, userPage, pendingUsersOnly),
                 adminDAO.findRequests(requestSearch, requestPage),
                 adminDAO.demandRows(),
                 adminDAO.districtDemand(),
@@ -275,7 +315,8 @@ public final class AdminDashboardController {
         long generation = userSearchGeneration.incrementAndGet();
         String search = userSearchField.getText();
         int page = userPage;
-        BackgroundTasks.run(() -> adminDAO.findUsers(search, page),
+        boolean pendingOnly = pendingUsersOnlyCheck.isSelected();
+        BackgroundTasks.run(() -> adminDAO.findUsers(search, page, pendingOnly),
                 result -> { if (generation == userSearchGeneration.get()) applyUsers(result); },
                 error -> statusMessageLabel.setText(error.getMessage()));
     }
@@ -381,5 +422,39 @@ public final class AdminDashboardController {
         if (refreshTimeline != null) refreshTimeline.stop();
         PushClient.getInstance().disconnect();
         SceneManager.logout();
+    }
+
+    @FXML private void changeLogo() {
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+        java.io.File file = chooser.showOpenDialog(appLogoView.getScene().getWindow());
+        if (file != null) {
+            try {
+                LogoManager.updateLogo(file);
+                AlertUtil.info("Logo Updated", "Logo updated successfully.");
+            } catch (Exception e) {
+                AlertUtil.error("Logo Update Failed", "Failed to update logo: " + e.getMessage());
+            }
+        }
+    }
+
+    @FXML private void changeProfilePhoto() {
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+        java.io.File file = chooser.showOpenDialog(profilePhotoView.getScene().getWindow());
+        if (file != null) {
+            try {
+                byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
+                ServiceResult<Void> result = new ProfileService().updatePhoto(admin.getId(), bytes);
+                if (result.success()) {
+                    profilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes)));
+                    AlertUtil.info("Photo Updated", "Profile photo updated.");
+                } else {
+                    AlertUtil.error("Update Failed", result.message());
+                }
+            } catch (Exception e) {
+                AlertUtil.error("Error", "Failed to read photo: " + e.getMessage());
+            }
+        }
     }
 }

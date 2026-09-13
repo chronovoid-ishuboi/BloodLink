@@ -4,10 +4,12 @@ import com.bloodlink.model.*;
 import com.bloodlink.service.AuthService;
 import com.bloodlink.util.AlertUtil;
 import com.bloodlink.util.BackgroundTasks;
+import com.bloodlink.util.LogoManager;
 import com.bloodlink.util.NidScanDialog;
 import com.bloodlink.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
 public final class RegisterController {
@@ -19,23 +21,57 @@ public final class RegisterController {
     @FXML private TextArea addressArea;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmPasswordField;
+    @FXML private PasswordField nidNumberField;
+    @FXML private TextField guardianNameField;
+    @FXML private TextField guardianPhoneField;
     @FXML private VBox donorFields;
     @FXML private ComboBox<BloodGroup> bloodGroupCombo;
     @FXML private DatePicker birthDatePicker;
     @FXML private TextField weightField;
+    @FXML private TextField heightField;
     @FXML private DatePicker lastDonationPicker;
+    @FXML private TextField chronicConditionsField;
+    @FXML private CheckBox recentSurgeryCheck;
+    @FXML private TextField recentSurgeryDetailsField;
+    @FXML private CheckBox recentTattooCheck;
+    @FXML private TextField recentTattooDetailsField;
+    @FXML private CheckBox currentMedicationsCheck;
+    @FXML private TextField currentMedicationsDetailsField;
+    @FXML private CheckBox recentIllnessCheck;
+    @FXML private TextField recentIllnessDetailsField;
+    @FXML private CheckBox recentPregnancyCheck;
+    @FXML private TextField recentPregnancyDetailsField;
     @FXML private Label errorLabel;
     @FXML private Button createButton;
     @FXML private Button scanNidButton;
+    
+    @FXML private ImageView profilePhotoView;
+    @FXML private Label profileInitialsLabel;
+    
+    private byte[] profilePhotoBytes = null;
 
     private final AuthService authService = new AuthService();
+
+    @FXML private ImageView appLogoView;
 
     @FXML private void initialize() {
         roleCombo.getItems().setAll(Role.DONOR, Role.REQUESTER);
         roleCombo.setValue(Role.DONOR);
         bloodGroupCombo.getItems().setAll(BloodGroup.values());
+        errorLabel.setText("");
+        LogoManager.applyLogo(appLogoView);
         roleCombo.valueProperty().addListener((obs, oldValue, newValue) -> updateDonorFields());
         updateDonorFields();
+        setupToggleField(recentSurgeryCheck, recentSurgeryDetailsField);
+        setupToggleField(recentTattooCheck, recentTattooDetailsField);
+        setupToggleField(currentMedicationsCheck, currentMedicationsDetailsField);
+        setupToggleField(recentIllnessCheck, recentIllnessDetailsField);
+        setupToggleField(recentPregnancyCheck, recentPregnancyDetailsField);
+    }
+    
+    private void setupToggleField(CheckBox checkBox, TextField detailField) {
+        detailField.visibleProperty().bind(checkBox.selectedProperty());
+        detailField.managedProperty().bind(checkBox.selectedProperty());
     }
 
     private void updateDonorFields() {
@@ -52,13 +88,28 @@ public final class RegisterController {
      */
     @FXML private void createAccount() {
         Double weight = null;
-        if (roleCombo.getValue() == Role.DONOR && !weightField.getText().isBlank()) {
-            try { weight = Double.parseDouble(weightField.getText().trim()); }
-            catch (NumberFormatException e) { errorLabel.setText("Weight must be numeric."); return; }
+        Double height = null;
+        if (roleCombo.getValue() == Role.DONOR) {
+            if (!weightField.getText().isBlank()) {
+                try { weight = Double.parseDouble(weightField.getText().trim()); }
+                catch (NumberFormatException e) { errorLabel.setText("Weight must be numeric."); return; }
+            }
+            if (!heightField.getText().isBlank()) {
+                try { height = Double.parseDouble(heightField.getText().trim()); }
+                catch (NumberFormatException e) { errorLabel.setText("Height must be numeric."); return; }
+            }
         }
         RegistrationData data = new RegistrationData(roleCombo.getValue(), fullNameField.getText(), emailField.getText(),
                 phoneField.getText(), districtField.getText(), addressArea.getText(), passwordField.getText(),
-                bloodGroupCombo.getValue(), birthDatePicker.getValue(), weight, lastDonationPicker.getValue());
+                nidNumberField.getText(), guardianNameField.getText(), guardianPhoneField.getText(),
+                bloodGroupCombo.getValue(), birthDatePicker.getValue(), weight, lastDonationPicker.getValue(),
+                height, chronicConditionsField.getText(),
+                recentSurgeryCheck.isSelected(), recentSurgeryDetailsField.getText(),
+                recentTattooCheck.isSelected(), recentTattooDetailsField.getText(),
+                currentMedicationsCheck.isSelected(), currentMedicationsDetailsField.getText(),
+                recentIllnessCheck.isSelected(), recentIllnessDetailsField.getText(),
+                recentPregnancyCheck.isSelected(), recentPregnancyDetailsField.getText(),
+                profilePhotoBytes);
         String confirmPassword = confirmPasswordField.getText();
         errorLabel.setText("");
         createButton.setDisable(true);
@@ -90,6 +141,40 @@ public final class RegisterController {
             if (result.birthDate() != null) birthDatePicker.setValue(result.birthDate());
             if (result.bloodGroup() != null) bloodGroupCombo.setValue(result.bloodGroup());
             if (result.address() != null && !result.address().isBlank()) addressArea.setText(result.address());
+            if (result.nidNumber() != null && !result.nidNumber().isBlank()) nidNumberField.setText(result.nidNumber());
         });
+    }
+
+    @FXML private void uploadPhoto() {
+        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        fileChooser.setTitle("Select Profile Photo");
+        fileChooser.getExtensionFilters().addAll(
+                new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
+        );
+        java.io.File selectedFile = fileChooser.showOpenDialog(fullNameField.getScene().getWindow());
+        if (selectedFile != null) {
+            try {
+                byte[] bytes = java.nio.file.Files.readAllBytes(selectedFile.toPath());
+                if (bytes.length > 5 * 1024 * 1024) {
+                    com.bloodlink.util.AlertUtil.error("File too large", "Profile photo must be smaller than 5 MB.");
+                    return;
+                }
+                this.profilePhotoBytes = bytes;
+                javafx.scene.image.Image img = new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes));
+                profilePhotoView.setImage(img);
+                profilePhotoView.setVisible(true);
+                profileInitialsLabel.setVisible(false);
+            } catch (java.io.IOException e) {
+                com.bloodlink.util.AlertUtil.error("Upload failed", "Could not read the selected image file.");
+            }
+        }
+    }
+
+    @FXML private void removePhoto() {
+        this.profilePhotoBytes = null;
+        profilePhotoView.setImage(null);
+        profilePhotoView.setVisible(false);
+        profileInitialsLabel.setText(fullNameField.getText().isBlank() ? "?" : fullNameField.getText().substring(0, 1).toUpperCase());
+        profileInitialsLabel.setVisible(true);
     }
 }

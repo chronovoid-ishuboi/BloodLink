@@ -11,6 +11,12 @@ import javafx.stage.Stage;
 public final class Main extends Application {
     @Override public void start(Stage stage) {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            try {
+                java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("crash.log", true));
+                pw.println("Uncaught exception in thread " + thread.getName() + " at " + java.time.LocalDateTime.now());
+                throwable.printStackTrace(pw);
+                pw.close();
+            } catch (Exception e) {}
             throwable.printStackTrace();
             Platform.runLater(() -> AlertUtil.error("Unexpected error", "An unexpected error occurred. See the application log for details."));
         });

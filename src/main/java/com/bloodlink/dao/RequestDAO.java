@@ -141,12 +141,16 @@ public final class RequestDAO {
                 while (rs.next()) {
                     long referenceHospitalIdValue = rs.getLong("reference_hospital_id");
                     boolean referenceHospitalIdWasNull = rs.wasNull();
+                    double latVal = rs.getDouble("hospital_latitude");
+                    Double hLat = rs.wasNull() ? null : latVal;
+                    double lngVal = rs.getDouble("hospital_longitude");
+                    Double hLng = rs.wasNull() ? null : lngVal;
                     raw.add(new DonorMatchRow(rs.getLong("donor_id"), rs.getString("full_name"),
                             BloodGroup.valueOf(rs.getString("blood_group")), rs.getString("district"), rs.getString("phone"),
                             rs.getDouble("match_score"), rs.getString("match_reason"),
                             AvailabilityStatus.valueOf(rs.getString("availability_status")), rs.getInt("verified_donation_count"),
                             referenceHospitalIdWasNull ? null : referenceHospitalIdValue,
-                            (Double) rs.getObject("hospital_latitude"), (Double) rs.getObject("hospital_longitude"),
+                            hLat, hLng,
                             MatchStatus.valueOf(rs.getString("match_status")),
                             rs.getTimestamp("donor_confirmed_at") != null, rs.getTimestamp("requester_confirmed_at") != null));
                 }
@@ -195,11 +199,15 @@ public final class RequestDAO {
             statement.setLong(1, donorId);
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
+                    double latVal = rs.getDouble("hospital_latitude");
+                    Double hLat = rs.wasNull() ? null : latVal;
+                    double lngVal = rs.getDouble("hospital_longitude");
+                    Double hLng = rs.wasNull() ? null : lngVal;
                     raw.add(new RequesterMatchRow(rs.getLong("id"), rs.getLong("requester_id"), BloodGroup.valueOf(rs.getString("blood_group")),
                             rs.getString("hospital_name"), rs.getString("district"), Urgency.valueOf(rs.getString("urgency")),
                             rs.getObject("deadline", LocalDate.class), RequestStatus.valueOf(rs.getString("status")),
                             MatchStatus.valueOf(rs.getString("match_status")), rs.getDouble("match_score"),
-                            (Double) rs.getObject("hospital_latitude"), (Double) rs.getObject("hospital_longitude"),
+                            hLat, hLng,
                             rs.getInt("units_needed"), rs.getInt("units_fulfilled"),
                             rs.getTimestamp("donor_confirmed_at") != null, rs.getTimestamp("requester_confirmed_at") != null));
                 }
@@ -702,11 +710,15 @@ public final class RequestDAO {
         boolean hospitalIdWasNull = rs.wasNull();
         Timestamp donorConfirmed = rs.getTimestamp("donor_confirmed_at");
         Timestamp requesterConfirmed = rs.getTimestamp("requester_confirmed_at");
+        double latVal = rs.getDouble("hospital_latitude");
+        Double hLat = rs.wasNull() ? null : latVal;
+        double lngVal = rs.getDouble("hospital_longitude");
+        Double hLng = rs.wasNull() ? null : lngVal;
         return new BloodRequest(rs.getLong("id"), rs.getLong("requester_id"), rs.getString("requester_name"),
                 BloodGroup.valueOf(rs.getString("blood_group")), rs.getInt("units_needed"), rs.getInt("units_fulfilled"),
                 Urgency.valueOf(rs.getString("urgency")), rs.getString("hospital_name"),
                 hospitalIdWasNull ? null : hospitalIdValue,
-                (Double) rs.getObject("hospital_latitude"), (Double) rs.getObject("hospital_longitude"),
+                hLat, hLng,
                 rs.getString("district"), rs.getObject("deadline", LocalDate.class), rs.getString("notes"),
                 RequestStatus.valueOf(rs.getString("status")),
                 donorIdWasNull ? null : donorId,

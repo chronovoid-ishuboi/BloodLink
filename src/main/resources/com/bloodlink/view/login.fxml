@@ -7,6 +7,7 @@
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -22,7 +23,10 @@
         <padding><Insets top="36" right="36" bottom="36" left="36"/></padding>
 
         <VBox spacing="4" alignment="CENTER">
-            <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon" scaleX="1.36" scaleY="1.36"/>
+            <StackPane>
+                <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon" scaleX="1.36" scaleY="1.36"/>
+                <ImageView fx:id="appLogoView" fitWidth="38" fitHeight="38" preserveRatio="true"/>
+            </StackPane>
             <Label text="BloodLink" styleClass="header-brand"/>
             <Label text="Sign in to continue" styleClass="helper-text"/>
         </VBox>

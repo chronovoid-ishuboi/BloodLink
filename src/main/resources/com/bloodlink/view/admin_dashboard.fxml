@@ -10,6 +10,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
@@ -19,6 +20,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.image.ImageView?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -30,11 +33,19 @@
     <top>
         <HBox styleClass="topbar" spacing="14" alignment="CENTER_LEFT">
             <padding><Insets top="14" right="22" bottom="14" left="22"/></padding>
-            <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon"/>
+            <StackPane onMouseClicked="#changeLogo" style="-fx-cursor: hand;">
+                <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon"/>
+                <ImageView fx:id="appLogoView" fitWidth="24" fitHeight="24" preserveRatio="true"/>
+            </StackPane>
             <Label text="BloodLink" styleClass="header-brand"/>
             <Label text="Admin Command Center" styleClass="topbar-title"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="welcomeLabel" styleClass="topbar-title" text="Administrator"/>
+            <HBox alignment="CENTER" spacing="8" onMouseClicked="#changeProfilePhoto" style="-fx-cursor: hand;">
+                <ImageView fx:id="profilePhotoView" fitWidth="32" fitHeight="32" preserveRatio="true">
+                    <clip><javafx.scene.shape.Circle centerX="16" centerY="16" radius="16"/></clip>
+                </ImageView>
+                <Label fx:id="welcomeLabel" styleClass="topbar-title" text="Administrator"/>
+            </HBox>
             <Button text="Log out" styleClass="button-ghost" onAction="#logout"/>
         </HBox>
     </top>
@@ -98,6 +109,7 @@
                     <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
                     <HBox spacing="10" alignment="CENTER_LEFT">
                         <TextField fx:id="userSearchField" promptText="Search name, email, or district..." HBox.hgrow="ALWAYS"/>
+                        <javafx.scene.control.CheckBox fx:id="pendingUsersOnlyCheck" text="Pending Approval Only"/>
                         <Button text="Approve" styleClass="button-primary" onAction="#approveSelectedUser"/>
                         <Button text="Suspend" styleClass="button-danger-outline" onAction="#suspendSelectedUser"/>
                         <Button text="Activate" styleClass="button-secondary" onAction="#activateSelectedUser"/>
@@ -195,6 +207,22 @@
                         <Label fx:id="auditPageLabel" styleClass="helper-text" text="Page 1"/>
                         <Button text="Next ▶" styleClass="button-ghost" onAction="#nextAuditPage"/>
                     </HBox>
+                </VBox>
+            </Tab>
+
+            <Tab text="Settings">
+                <VBox spacing="14">
+                    <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+                    <Label text="Application Settings" styleClass="section-title"/>
+                    <VBox spacing="8" styleClass="content-card">
+                        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                        <Label text="Custom App Logo" styleClass="field-label"/>
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <Button text="Upload New Logo" onAction="#uploadLogo" styleClass="button-secondary"/>
+                            <Button text="Reset to Default" onAction="#resetLogo" styleClass="button-ghost" style="-fx-text-fill: #ef4444;"/>
+                        </HBox>
+                        <Label text="Changes the logo displayed across all screens." styleClass="helper-text"/>
+                    </VBox>
                 </VBox>
             </Tab>
 

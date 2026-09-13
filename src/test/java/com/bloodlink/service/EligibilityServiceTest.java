@@ -41,7 +41,7 @@ class EligibilityServiceTest {
 
     private Donor donor(LocalDate birthDate, double weight, LocalDate lastDonationDate) {
         return new Donor(1, "Test Donor", "donor@test.local", "01700000000", "Dhaka", "",
-                true, true, LocalDateTime.now(), BloodGroup.O_POSITIVE, birthDate, weight,
-                lastDonationDate, AvailabilityStatus.AVAILABLE, 0, null);
+                true, true, LocalDateTime.now(), null, null, null, BloodGroup.O_POSITIVE, birthDate, weight,
+                lastDonationDate, AvailabilityStatus.AVAILABLE, 0, null, null, null, false, null, false, null, false, null, false, null, false, null);
     }
 }

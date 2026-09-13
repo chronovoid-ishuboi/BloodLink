@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
@@ -35,11 +36,19 @@
     <top>
         <HBox styleClass="topbar" spacing="14" alignment="CENTER_LEFT">
             <padding><Insets top="14" right="22" bottom="14" left="22"/></padding>
-            <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon"/>
+            <StackPane>
+                <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon"/>
+                <ImageView fx:id="appLogoView" fitWidth="24" fitHeight="24" preserveRatio="true"/>
+            </StackPane>
             <Label text="BloodLink" styleClass="header-brand"/>
             <Label text="Donor Workspace" styleClass="topbar-title"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="welcomeLabel" styleClass="topbar-title" text="Welcome"/>
+            <HBox alignment="CENTER" spacing="8" onMouseClicked="#changeProfilePhoto" style="-fx-cursor: hand;">
+                <ImageView fx:id="headerProfilePhotoView" fitWidth="32" fitHeight="32" preserveRatio="true">
+                    <clip><javafx.scene.shape.Circle centerX="16" centerY="16" radius="16"/></clip>
+                </ImageView>
+                <Label fx:id="welcomeLabel" styleClass="topbar-title" text="Welcome"/>
+            </HBox>
             <Label fx:id="unreadLabel" text="0" styleClass="notification-count"/>
             <Button text="Log out" styleClass="button-ghost" onAction="#logout"/>
         </HBox>
@@ -200,14 +209,13 @@
                         <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
 
                         <VBox spacing="14" styleClass="content-card">
-                            <Label text="Your details" styleClass="section-title"/>
+                            <Label text="Personal Information" styleClass="section-title"/>
                             <HBox spacing="16" alignment="CENTER_LEFT">
                                 <StackPane>
                                     <ImageView fx:id="profilePhotoView" fitWidth="84" fitHeight="84" preserveRatio="false" styleClass="avatar-photo" visible="false" managed="false"/>
                                     <Label fx:id="profileInitialsLabel" styleClass="avatar-initials" text="?"/>
                                 </StackPane>
                                 <VBox spacing="8">
-                                    <Label text="Photo is optional and never required to use BloodLink." styleClass="helper-text" wrapText="true"/>
                                     <HBox spacing="10">
                                         <Button fx:id="uploadPhotoButton" text="Upload Photo" styleClass="button-secondary" onAction="#uploadPhoto"/>
                                         <Button fx:id="removePhotoButton" text="Remove" styleClass="button-ghost" onAction="#removePhoto"/>
@@ -224,20 +232,46 @@
                                     <TextField fx:id="nameField"/>
                                 </VBox>
                                 <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                                    <Label text="NID NUMBER" styleClass="field-label"/>
+                                    <Label fx:id="nidLabel" styleClass="stat-value" text="Not Provided"/>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+                        
+                        <VBox spacing="14" styleClass="content-card">
+                            <Label text="Contact Information" styleClass="section-title"/>
+                            <GridPane hgap="16" vgap="14">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="50"/>
+                                    <ColumnConstraints percentWidth="50"/>
+                                </columnConstraints>
+                                <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="0">
                                     <Label text="PHONE" styleClass="field-label"/>
                                     <TextField fx:id="phoneField"/>
                                 </VBox>
+                                <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                                    <Label text="EMAIL" styleClass="field-label"/>
+                                    <Label fx:id="emailLabel" styleClass="stat-value" text=""/>
+                                </VBox>
                                 <VBox spacing="6" GridPane.rowIndex="1" GridPane.columnIndex="0">
+                                    <Label text="GUARDIAN NAME" styleClass="field-label"/>
+                                    <TextField fx:id="guardianNameField"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                                    <Label text="GUARDIAN PHONE" styleClass="field-label"/>
+                                    <TextField fx:id="guardianPhoneField"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.columnSpan="2">
                                     <Label text="DISTRICT" styleClass="field-label"/>
                                     <TextField fx:id="districtField"/>
                                 </VBox>
-                                <VBox spacing="6" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                                <VBox spacing="6" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
                                     <Label text="ADDRESS" styleClass="field-label"/>
                                     <TextArea fx:id="addressArea" prefRowCount="2" wrapText="true"/>
                                 </VBox>
                             </GridPane>
                             <HBox spacing="12" alignment="CENTER_LEFT">
-                                <Button text="Save Profile" styleClass="button-primary" onAction="#saveProfile"/>
+                                <Button text="Save Contact Info" styleClass="button-primary" onAction="#saveProfile"/>
                             </HBox>
                         </VBox>
 
@@ -245,18 +279,68 @@
                             <Label text="Health details" styleClass="section-title"/>
                             <GridPane hgap="16" vgap="14">
                                 <columnConstraints>
-                                    <ColumnConstraints percentWidth="50"/>
-                                    <ColumnConstraints percentWidth="50"/>
+                                    <ColumnConstraints percentWidth="33"/>
+                                    <ColumnConstraints percentWidth="33"/>
+                                    <ColumnConstraints percentWidth="33"/>
                                 </columnConstraints>
                                 <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="0">
+                                    <Label text="BLOOD GROUP" styleClass="field-label"/>
+                                    <Label fx:id="bloodGroupLabel" styleClass="stat-value" text=""/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="1">
                                     <Label text="WEIGHT (KG)" styleClass="field-label"/>
                                     <TextField fx:id="weightField"/>
                                 </VBox>
-                                <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                                <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="2">
+                                    <Label text="HEIGHT (CM)" styleClass="field-label"/>
+                                    <TextField fx:id="heightField"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.rowIndex="1" GridPane.columnIndex="0">
                                     <Label text="LAST DONATION DATE" styleClass="field-label"/>
                                     <DatePicker fx:id="lastDonationPicker" maxWidth="Infinity"/>
                                 </VBox>
                             </GridPane>
+                            
+                            <Label text="Medical Screening" styleClass="field-label" style="-fx-padding: 10 0 0 0;"/>
+                            <VBox spacing="6">
+                                <Label text="Chronic conditions (if any)" styleClass="helper-text"/>
+                                <TextField fx:id="chronicConditionsField"/>
+                            </VBox>
+                            <VBox spacing="6">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Recent surgery (last 6 months)?" styleClass="helper-text" prefWidth="250"/>
+                                    <CheckBox fx:id="recentSurgeryCheck"/>
+                                </HBox>
+                                <TextField fx:id="recentSurgeryDetailsField" managed="false" visible="false"/>
+                            </VBox>
+                            <VBox spacing="6">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Recent tattoo/piercing (last 6 months)?" styleClass="helper-text" prefWidth="250"/>
+                                    <CheckBox fx:id="recentTattooCheck"/>
+                                </HBox>
+                                <TextField fx:id="recentTattooDetailsField" managed="false" visible="false"/>
+                            </VBox>
+                            <VBox spacing="6">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Currently taking medications?" styleClass="helper-text" prefWidth="250"/>
+                                    <CheckBox fx:id="currentMedicationsCheck"/>
+                                </HBox>
+                                <TextField fx:id="currentMedicationsDetailsField" managed="false" visible="false"/>
+                            </VBox>
+                            <VBox spacing="6">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Recent infectious illness?" styleClass="helper-text" prefWidth="250"/>
+                                    <CheckBox fx:id="recentIllnessCheck"/>
+                                </HBox>
+                                <TextField fx:id="recentIllnessDetailsField" managed="false" visible="false"/>
+                            </VBox>
+                            <VBox spacing="6">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Pregnancy in last 6 months?" styleClass="helper-text" prefWidth="250"/>
+                                    <CheckBox fx:id="recentPregnancyCheck"/>
+                                </HBox>
+                                <TextField fx:id="recentPregnancyDetailsField" managed="false" visible="false"/>
+                            </VBox>
                             <HBox spacing="12" alignment="CENTER_LEFT">
                                 <Button text="Save Health Info" styleClass="button-primary" onAction="#saveHealth"/>
                             </HBox>

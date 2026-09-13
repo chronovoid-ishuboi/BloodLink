@@ -5,12 +5,14 @@ import com.bloodlink.dao.RequestDAO;
 import com.bloodlink.model.*;
 import com.bloodlink.service.*;
 import com.bloodlink.util.*;
+import com.bloodlink.util.LogoManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
@@ -19,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public final class RequesterDashboardController {
+    @FXML private ImageView appLogoView;
     @FXML private Label welcomeLabel;
     @FXML private Label unreadLabel;
     @FXML private ComboBox<BloodGroup> bloodGroupCombo;
@@ -66,6 +69,7 @@ public final class RequesterDashboardController {
     @FXML private TextField phoneField;
     @FXML private TextField profileDistrictField;
     @FXML private TextArea addressArea;
+    @FXML private ImageView headerProfilePhotoView;
     @FXML private javafx.scene.image.ImageView profilePhotoView;
     @FXML private Label profileInitialsLabel;
     @FXML private Button uploadPhotoButton;
@@ -74,6 +78,10 @@ public final class RequesterDashboardController {
     @FXML private PasswordField newPasswordField;
     @FXML private PasswordField confirmPasswordField;
     @FXML private Label profileMessageLabel;
+    @FXML private Label nidLabel;
+    @FXML private Label emailLabel;
+    @FXML private TextField guardianNameField;
+    @FXML private TextField guardianPhoneField;
 
     private final RequestDAO requestDAO = new RequestDAO();
     private final HospitalDAO hospitalDAO = new HospitalDAO();
@@ -89,10 +97,18 @@ public final class RequesterDashboardController {
 
     @FXML private void initialize() {
         if (!(SessionManager.getInstance().getCurrentUser() instanceof Requester currentRequester)) {
-            SceneManager.showLogin(); return;
+            throw new IllegalStateException("RequesterDashboardController loaded without an active Requester session.");
         }
-        requester = currentRequester;
-        welcomeLabel.setText("Welcome, " + requester.getFullName());
+        this.requester = currentRequester;
+        welcomeLabel.setText(requester.getFullName());
+        LogoManager.applyLogo(appLogoView);
+        new ProfileService().loadPhoto(requester.getId()).ifPresent(bytes -> {
+            try {
+                headerProfilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes)));
+                profilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes)));
+            } catch (Exception ignored) {}
+        });
+        configureTables();
         PushClient.getInstance().connect(requester.getId());
         PushClient.getInstance().onRefresh(this::refreshAll);
         bloodGroupCombo.getItems().setAll(BloodGroup.values());
@@ -215,6 +231,10 @@ public final class RequesterDashboardController {
     private void populateProfile() {
         nameField.setText(requester.getFullName()); phoneField.setText(requester.getPhone());
         profileDistrictField.setText(requester.getDistrict()); addressArea.setText(requester.getAddress());
+        nidLabel.setText(requester.getNidNumber() != null ? requester.getNidNumber() : "Not Provided");
+        emailLabel.setText(requester.getEmail() != null ? requester.getEmail() : "Not Provided");
+        guardianNameField.setText(requester.getGuardianName());
+        guardianPhoneField.setText(requester.getGuardianPhone());
         applyProfilePhoto();
     }
 
@@ -227,6 +247,7 @@ public final class RequesterDashboardController {
         java.util.Optional<byte[]> photo = profileService.loadPhoto(requester.getId());
         if (photo.isPresent()) {
             try {
+                headerProfilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(photo.get())));
                 profilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(photo.get())));
                 profilePhotoView.setClip(new javafx.scene.shape.Circle(42, 42, 42));
                 profilePhotoView.setVisible(true);
@@ -238,6 +259,8 @@ public final class RequesterDashboardController {
                 // Stored bytes weren't a decodable image -- fall through to the initials badge below.
             }
         }
+        headerProfilePhotoView.setImage(null);
+        profilePhotoView.setImage(null);
         profilePhotoView.setVisible(false);
         profilePhotoView.setManaged(false);
         profileInitialsLabel.setVisible(true);
@@ -412,10 +435,11 @@ public final class RequesterDashboardController {
 
     @FXML private void saveProfile() {
         ServiceResult<User> result = profileService.updateProfile(requester.getId(), nameField.getText(), phoneField.getText(),
-                profileDistrictField.getText(), addressArea.getText());
+                profileDistrictField.getText(), addressArea.getText(), guardianNameField.getText(), guardianPhoneField.getText());
         if (result.success()) {
             requester.setFullName(result.data().getFullName()); requester.setPhone(result.data().getPhone());
             requester.setDistrict(result.data().getDistrict()); requester.setAddress(result.data().getAddress());
+            requester.setGuardianName(result.data().getGuardianName()); requester.setGuardianPhone(result.data().getGuardianPhone());
             welcomeLabel.setText("Welcome, " + requester.getFullName());
         }
         profileMessageLabel.setText(result.message());
@@ -448,5 +472,26 @@ public final class RequesterDashboardController {
         if (refreshTimeline != null) refreshTimeline.stop();
         PushClient.getInstance().disconnect();
         SceneManager.logout();
+    }
+
+    @FXML private void changeProfilePhoto() {
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+        java.io.File file = chooser.showOpenDialog(profilePhotoView.getScene().getWindow());
+        if (file != null) {
+            try {
+                byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
+                ServiceResult<Void> result = new ProfileService().updatePhoto(requester.getId(), bytes);
+                if (result.success()) {
+                    headerProfilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes)));
+                    profilePhotoView.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(bytes)));
+                    AlertUtil.info("Photo Updated", "Profile photo updated.");
+                } else {
+                    AlertUtil.error("Update Failed", result.message());
+                }
+            } catch (Exception e) {
+                AlertUtil.error("Error", "Failed to read photo: " + e.getMessage());
+            }
+        }
     }
 }

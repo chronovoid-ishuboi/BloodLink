@@ -21,17 +21,23 @@ public final class DonorService {
         }
     }
 
-    public ServiceResult<Void> updateHealth(long donorId, String weightText, LocalDate lastDonationDate) {
+    public ServiceResult<Void> updateHealth(long donorId, String weightText, String heightText, LocalDate lastDonationDate, String chronicConditions,
+                                            String recentSurgeryDetails, String recentTattooDetails, String currentMedicationsDetails,
+                                            String recentIllnessDetails, String recentPregnancyDetails) {
         try {
             double weight = Double.parseDouble(weightText.trim());
             if (weight < 35 || weight > 250) return ServiceResult.failure("Weight must be between 35 and 250 kg.");
+            Double height = null;
+            if (heightText != null && !heightText.trim().isEmpty()) {
+                height = Double.parseDouble(heightText.trim());
+            }
             if (lastDonationDate != null && lastDonationDate.isAfter(LocalDate.now()))
                 return ServiceResult.failure("Last donation date cannot be in the future.");
             authorizationService.requireSelfOrAdmin(donorId);
-            donorDAO.updateHealthProfile(donorId, weight, lastDonationDate);
+            donorDAO.updateHealthProfile(donorId, weight, height, lastDonationDate, chronicConditions, recentSurgeryDetails, recentTattooDetails, currentMedicationsDetails, recentIllnessDetails, recentPregnancyDetails);
             return ServiceResult.success("Health and cooldown information updated.", null);
         } catch (NumberFormatException e) {
-            return ServiceResult.failure("Enter a valid numeric weight.");
+            return ServiceResult.failure("Enter valid numeric weight and height.");
         } catch (SQLException e) {
             return ServiceResult.failure("Health profile could not be updated: " + e.getMessage());
         }

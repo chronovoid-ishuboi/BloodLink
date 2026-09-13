@@ -11,9 +11,12 @@ import java.util.List;
 public final class DonorDAO {
     public List<Donor> findAvailableDonors() throws SQLException {
         String sql = """
-                SELECT u.id, u.full_name, u.email, u.phone, u.district, u.address, u.approved, u.active, u.created_at,
+                SELECT u.id, u.full_name, u.email, u.phone, u.district, u.address, u.approved, u.active, u.created_at, u.nid_number, u.guardian_name, u.guardian_phone,
                        d.blood_group, d.birth_date, d.weight_kg, d.last_donation_date,
-                       d.availability_status, d.verified_donation_count, d.reference_hospital_id
+                       d.availability_status, d.verified_donation_count, d.reference_hospital_id,
+                       d.height_cm, d.chronic_conditions, d.recent_surgery, d.recent_surgery_details,
+                       d.recent_tattoo, d.recent_tattoo_details, d.current_medications, d.current_medications_details,
+                       d.recent_illness, d.recent_illness_details, d.recent_pregnancy, d.recent_pregnancy_details
                 FROM users u JOIN donor_profiles d ON d.user_id=u.id
                 WHERE u.role='DONOR' AND u.approved=TRUE AND u.active=TRUE AND d.availability_status='AVAILABLE'
                 """;
@@ -45,17 +48,39 @@ public final class DonorDAO {
         }
     }
 
-    public void updateHealthProfile(long donorId, double weightKg, LocalDate lastDonationDate) throws SQLException {
-        String sql = "UPDATE donor_profiles SET weight_kg=?, last_donation_date=? WHERE user_id=?";
+    public void updateHealthProfile(long donorId, double weightKg, Double heightCm, LocalDate lastDonationDate, String chronicConditions,
+                                    String recentSurgeryDetails, String recentTattooDetails, String currentMedicationsDetails,
+                                    String recentIllnessDetails, String recentPregnancyDetails) throws SQLException {
+        String sql = """
+            UPDATE donor_profiles 
+            SET weight_kg=?, height_cm=?, last_donation_date=?, chronic_conditions=?, 
+                recent_surgery=?, recent_surgery_details=?, recent_tattoo=?, recent_tattoo_details=?, 
+                current_medications=?, current_medications_details=?, recent_illness=?, recent_illness_details=?, 
+                recent_pregnancy=?, recent_pregnancy_details=? 
+            WHERE user_id=?
+            """;
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setDouble(1, weightKg);
-                statement.setObject(2, lastDonationDate);
-                statement.setLong(3, donorId);
+                if (heightCm == null) statement.setNull(2, Types.DOUBLE); else statement.setDouble(2, heightCm);
+                statement.setObject(3, lastDonationDate);
+                statement.setString(4, chronicConditions);
+                statement.setBoolean(5, recentSurgeryDetails != null);
+                statement.setString(6, recentSurgeryDetails);
+                statement.setBoolean(7, recentTattooDetails != null);
+                statement.setString(8, recentTattooDetails);
+                statement.setBoolean(9, currentMedicationsDetails != null);
+                statement.setString(10, currentMedicationsDetails);
+                statement.setBoolean(11, recentIllnessDetails != null);
+                statement.setString(12, recentIllnessDetails);
+                statement.setBoolean(13, recentPregnancyDetails != null);
+                statement.setString(14, recentPregnancyDetails);
+                statement.setLong(15, donorId);
+                
                 if (statement.executeUpdate() == 0) throw new SQLException("Donor profile not found.");
                 new AuditDAO().log(connection, donorId, "UPDATE_HEALTH_PROFILE", "DONOR_PROFILE", donorId,
-                        "Weight and last donation date updated");
+                        "Health profile updated");
                 connection.commit();
             } catch (SQLException e) {
                 connection.rollback();
@@ -114,12 +139,27 @@ public final class DonorDAO {
     private Donor mapDonor(ResultSet rs) throws SQLException {
         long referenceHospitalIdValue = rs.getLong("reference_hospital_id");
         boolean referenceHospitalIdWasNull = rs.wasNull();
+        Double heightCmValue = rs.getDouble("height_cm");
+        boolean heightCmWasNull = rs.wasNull();
         return new Donor(rs.getLong("id"), rs.getString("full_name"), rs.getString("email"),
                 rs.getString("phone"), rs.getString("district"), rs.getString("address"),
                 rs.getBoolean("approved"), rs.getBoolean("active"), rs.getTimestamp("created_at").toLocalDateTime(),
+                rs.getString("nid_number"), rs.getString("guardian_name"), rs.getString("guardian_phone"),
                 BloodGroup.valueOf(rs.getString("blood_group")), rs.getObject("birth_date", LocalDate.class),
                 rs.getDouble("weight_kg"), rs.getObject("last_donation_date", LocalDate.class),
                 AvailabilityStatus.valueOf(rs.getString("availability_status")), rs.getInt("verified_donation_count"),
-                referenceHospitalIdWasNull ? null : referenceHospitalIdValue);
+                referenceHospitalIdWasNull ? null : referenceHospitalIdValue,
+                heightCmWasNull ? null : heightCmValue,
+                rs.getString("chronic_conditions"),
+                rs.getBoolean("recent_surgery"),
+                rs.getString("recent_surgery_details"),
+                rs.getBoolean("recent_tattoo"),
+                rs.getString("recent_tattoo_details"),
+                rs.getBoolean("current_medications"),
+                rs.getString("current_medications_details"),
+                rs.getBoolean("recent_illness"),
+                rs.getString("recent_illness_details"),
+                rs.getBoolean("recent_pregnancy"),
+                rs.getString("recent_pregnancy_details"));
     }
 }

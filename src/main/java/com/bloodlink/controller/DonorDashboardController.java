@@ -5,6 +5,7 @@ import com.bloodlink.dao.HospitalDAO;
 import com.bloodlink.dao.RequestDAO;
 import com.bloodlink.model.*;
 import com.bloodlink.service.*;
+import com.bloodlink.util.LogoManager;
 import com.bloodlink.util.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -26,6 +27,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 
 public final class DonorDashboardController {
+    @FXML private ImageView appLogoView;
     @FXML private Label welcomeLabel;
     @FXML private Label bloodGroupLabel;
     @FXML private Label badgeLabel;
@@ -74,15 +76,32 @@ public final class DonorDashboardController {
     @FXML private ListView<Notification> notificationList;
 
     @FXML private TextField nameField;
+    @FXML private Label nidLabel;
     @FXML private TextField phoneField;
+    @FXML private Label emailLabel;
+    @FXML private TextField guardianNameField;
+    @FXML private TextField guardianPhoneField;
     @FXML private TextField districtField;
     @FXML private TextArea addressArea;
+    @FXML private ImageView headerProfilePhotoView;
     @FXML private ImageView profilePhotoView;
     @FXML private Label profileInitialsLabel;
     @FXML private Button uploadPhotoButton;
     @FXML private Button removePhotoButton;
     @FXML private TextField weightField;
+    @FXML private TextField heightField;
     @FXML private DatePicker lastDonationPicker;
+    @FXML private TextField chronicConditionsField;
+    @FXML private CheckBox recentSurgeryCheck;
+    @FXML private TextField recentSurgeryDetailsField;
+    @FXML private CheckBox recentTattooCheck;
+    @FXML private TextField recentTattooDetailsField;
+    @FXML private CheckBox currentMedicationsCheck;
+    @FXML private TextField currentMedicationsDetailsField;
+    @FXML private CheckBox recentIllnessCheck;
+    @FXML private TextField recentIllnessDetailsField;
+    @FXML private CheckBox recentPregnancyCheck;
+    @FXML private TextField recentPregnancyDetailsField;
     @FXML private ComboBox<Hospital> referenceHospitalCombo;
     @FXML private Label referenceHospitalHelperLabel;
     @FXML private PasswordField oldPasswordField;
@@ -110,7 +129,15 @@ public final class DonorDashboardController {
         if (!(SessionManager.getInstance().getCurrentUser() instanceof Donor currentDonor)) {
             SceneManager.showLogin(); return;
         }
-        donor = currentDonor;
+        this.donor = currentDonor;
+        welcomeLabel.setText(donor.getFullName());
+        LogoManager.applyLogo(appLogoView);
+        new ProfileService().loadPhoto(donor.getId()).ifPresent(bytes -> {
+            try {
+                headerProfilePhotoView.setImage(new Image(new ByteArrayInputStream(bytes)));
+                profilePhotoView.setImage(new Image(new ByteArrayInputStream(bytes)));
+            } catch (Exception ignored) {}
+        });
         configureTables();
         configureReferenceHospitalPicker();
         PushClient.getInstance().connect(donor.getId());
@@ -218,12 +245,42 @@ public final class DonorDashboardController {
         welcomeLabel.setText("Welcome, " + donor.getFullName());
         bloodGroupLabel.setText(donor.getBloodGroup().toString());
         badgeLabel.setText(donor.getBadgeTier() + " donor");
+        
+        // Personal Information
         nameField.setText(donor.getFullName());
+        String nid = donor.getNidNumber();
+        if (nid != null && nid.length() > 4) {
+            nidLabel.setText("*" + nid.substring(nid.length() - 4));
+        } else {
+            nidLabel.setText(nid != null ? nid : "Not Provided");
+        }
+        
+        // Contact Information
         phoneField.setText(donor.getPhone());
+        emailLabel.setText(donor.getEmail());
+        guardianNameField.setText(donor.getGuardianName());
+        guardianPhoneField.setText(donor.getGuardianPhone());
         districtField.setText(donor.getDistrict());
         addressArea.setText(donor.getAddress());
+        
+        // Health & Eligibility
         weightField.setText(String.valueOf(donor.getWeightKg()));
+        heightField.setText(donor.getHeightCm() != null ? String.valueOf(donor.getHeightCm()) : "");
         lastDonationPicker.setValue(donor.getLastDonationDate());
+        
+        // Screening
+        chronicConditionsField.setText(donor.getChronicConditions());
+        recentSurgeryCheck.setSelected(donor.getRecentSurgeryDetails() != null && !donor.getRecentSurgeryDetails().isBlank());
+        recentSurgeryDetailsField.setText(donor.getRecentSurgeryDetails());
+        recentTattooCheck.setSelected(donor.getRecentTattooDetails() != null && !donor.getRecentTattooDetails().isBlank());
+        recentTattooDetailsField.setText(donor.getRecentTattooDetails());
+        currentMedicationsCheck.setSelected(donor.getCurrentMedicationsDetails() != null && !donor.getCurrentMedicationsDetails().isBlank());
+        currentMedicationsDetailsField.setText(donor.getCurrentMedicationsDetails());
+        recentIllnessCheck.setSelected(donor.getRecentIllnessDetails() != null && !donor.getRecentIllnessDetails().isBlank());
+        recentIllnessDetailsField.setText(donor.getRecentIllnessDetails());
+        recentPregnancyCheck.setSelected(donor.getRecentPregnancyDetails() != null && !donor.getRecentPregnancyDetails().isBlank());
+        recentPregnancyDetailsField.setText(donor.getRecentPregnancyDetails());
+
         populateReferenceHospital();
         applyProfilePhoto();
         updateEligibilityCard();
@@ -240,6 +297,7 @@ public final class DonorDashboardController {
         java.util.Optional<byte[]> photo = profileService.loadPhoto(donor.getId());
         if (photo.isPresent()) {
             try {
+                headerProfilePhotoView.setImage(new Image(new ByteArrayInputStream(photo.get())));
                 profilePhotoView.setImage(new Image(new ByteArrayInputStream(photo.get())));
                 profilePhotoView.setClip(new Circle(42, 42, 42));
                 profilePhotoView.setVisible(true);
@@ -251,6 +309,8 @@ public final class DonorDashboardController {
                 // Stored bytes weren't a decodable image -- fall through to the initials badge below.
             }
         }
+        headerProfilePhotoView.setImage(null);
+        profilePhotoView.setImage(null);
         profilePhotoView.setVisible(false);
         profilePhotoView.setManaged(false);
         profileInitialsLabel.setVisible(true);
@@ -481,18 +541,37 @@ public final class DonorDashboardController {
 
     @FXML private void saveProfile() {
         ServiceResult<User> result = profileService.updateProfile(donor.getId(), nameField.getText(), phoneField.getText(),
-                districtField.getText(), addressArea.getText());
+                districtField.getText(), addressArea.getText(), guardianNameField.getText(), guardianPhoneField.getText());
         if (!result.success()) { profileMessageLabel.setText(result.message()); return; }
         donor.setFullName(result.data().getFullName()); donor.setPhone(result.data().getPhone());
         donor.setDistrict(result.data().getDistrict()); donor.setAddress(result.data().getAddress());
+        donor.setGuardianName(result.data().getGuardianName()); donor.setGuardianPhone(result.data().getGuardianPhone());
         profileMessageLabel.setText(result.message()); populateProfile();
     }
 
     @FXML private void saveHealth() {
-        ServiceResult<Void> result = donorService.updateHealth(donor.getId(), weightField.getText(), lastDonationPicker.getValue());
+        ServiceResult<Void> result = donorService.updateHealth(
+                donor.getId(),
+                weightField.getText(),
+                heightField.getText(),
+                lastDonationPicker.getValue(),
+                chronicConditionsField.getText(),
+                recentSurgeryCheck.isSelected() ? recentSurgeryDetailsField.getText() : null,
+                recentTattooCheck.isSelected() ? recentTattooDetailsField.getText() : null,
+                currentMedicationsCheck.isSelected() ? currentMedicationsDetailsField.getText() : null,
+                recentIllnessCheck.isSelected() ? recentIllnessDetailsField.getText() : null,
+                recentPregnancyCheck.isSelected() ? recentPregnancyDetailsField.getText() : null
+        );
         if (result.success()) {
-            donor.setWeightKg(Double.parseDouble(weightField.getText().trim()));
+            if (!weightField.getText().isBlank()) donor.setWeightKg(Double.parseDouble(weightField.getText().trim()));
+            if (!heightField.getText().isBlank()) donor.setHeightCm(Double.parseDouble(heightField.getText().trim()));
             donor.setLastDonationDate(lastDonationPicker.getValue());
+            donor.setChronicConditions(chronicConditionsField.getText());
+            donor.setRecentSurgeryDetails(recentSurgeryCheck.isSelected() ? recentSurgeryDetailsField.getText() : null);
+            donor.setRecentTattooDetails(recentTattooCheck.isSelected() ? recentTattooDetailsField.getText() : null);
+            donor.setCurrentMedicationsDetails(currentMedicationsCheck.isSelected() ? currentMedicationsDetailsField.getText() : null);
+            donor.setRecentIllnessDetails(recentIllnessCheck.isSelected() ? recentIllnessDetailsField.getText() : null);
+            donor.setRecentPregnancyDetails(recentPregnancyCheck.isSelected() ? recentPregnancyDetailsField.getText() : null);
             updateEligibilityCard();
         }
         profileMessageLabel.setText(result.message());
@@ -557,5 +636,26 @@ public final class DonorDashboardController {
         if (refreshTimeline != null) refreshTimeline.stop();
         PushClient.getInstance().disconnect();
         SceneManager.logout();
+    }
+
+    @FXML private void changeProfilePhoto() {
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+        File file = chooser.showOpenDialog(profilePhotoView.getScene().getWindow());
+        if (file != null) {
+            try {
+                byte[] bytes = Files.readAllBytes(file.toPath());
+                ServiceResult<Void> result = new ProfileService().updatePhoto(donor.getId(), bytes);
+                if (result.success()) {
+                    headerProfilePhotoView.setImage(new Image(new ByteArrayInputStream(bytes)));
+                    profilePhotoView.setImage(new Image(new ByteArrayInputStream(bytes)));
+                    AlertUtil.info("Photo Updated", "Profile photo updated.");
+                } else {
+                    AlertUtil.error("Update Failed", result.message());
+                }
+            } catch (Exception e) {
+                AlertUtil.error("Error", "Failed to read photo: " + e.getMessage());
+            }
+        }
     }
 }

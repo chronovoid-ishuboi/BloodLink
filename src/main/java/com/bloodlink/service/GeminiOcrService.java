@@ -42,8 +42,9 @@ public final class GeminiOcrService implements OcrService {
         try {
             StringBuilder partsBuilder = new StringBuilder();
             
-            String prompt = "Extract the following details from these Bangladesh NID card images: Name, Date of Birth (YYYY-MM-DD), " +
-                    "Blood Group (e.g. A_POSITIVE, O_NEGATIVE, B_POSITIVE, AB_NEGATIVE, etc), Address (Translate any Bengali text to English accurately), and NID number. " +
+            String prompt = "Act as an automated OCR engine. Extract the following text fields from the provided images: Name, Date of Birth (YYYY-MM-DD), " +
+                    "Blood Group (often found marked in red, e.g. A_POSITIVE, O_NEGATIVE, B_POSITIVE, AB_NEGATIVE, etc), " +
+                    "Address (translate any non-English address to English accurately), and ID number. " +
                     "Return the result STRICTLY in this exact line-by-line format with NO Markdown formatting or backticks:\\n" +
                     "NAME: <name>\\n" +
                     "DOB: <dob>\\n" +
@@ -86,7 +87,19 @@ public final class GeminiOcrService implements OcrService {
 
             if (response.statusCode() != 200) {
                 LOGGER.warning("Gemini API error: " + response.statusCode() + " - " + response.body());
-                return NidExtraction.failure("AI processing failed. Check your API key and quota.");
+                String errorMsg = "AI processing failed. Check your API key and quota.";
+                try {
+                    // Try to extract the actual error message from Google's response
+                    int msgStart = response.body().indexOf("\"message\": \"");
+                    if (msgStart != -1) {
+                        msgStart += 12;
+                        int msgEnd = response.body().indexOf("\"", msgStart);
+                        if (msgEnd != -1) {
+                            errorMsg = "Google API Error: " + response.body().substring(msgStart, msgEnd);
+                        }
+                    }
+                } catch (Exception ignored) {}
+                return NidExtraction.failure(errorMsg);
             }
 
             return parseGeminiResponse(response.body());
@@ -139,7 +152,7 @@ public final class GeminiOcrService implements OcrService {
             return NidExtraction.failure("AI could not confidently detect any fields on this card.");
         }
 
-        return new NidExtraction(true, name, dob, bloodGroup, address, nid == null ? null : maskNid(nid), null);
+        return new NidExtraction(true, name, dob, bloodGroup, address, nid, null);
     }
 
     private String extractValue(String line) {
@@ -159,7 +172,4 @@ public final class GeminiOcrService implements OcrService {
         try { return BloodGroup.valueOf(val.toUpperCase()); } catch (Exception e) { return null; }
     }
 
-    private String maskNid(String nid) {
-        return nid.length() <= 4 ? "••••" : "•".repeat(nid.length() - 4) + nid.substring(nid.length() - 4);
-    }
 }

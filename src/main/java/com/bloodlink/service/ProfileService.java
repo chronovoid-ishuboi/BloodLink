@@ -13,13 +13,13 @@ public final class ProfileService {
     private final UserDAO userDAO = new UserDAO();
     private final AuthorizationService authorizationService = new AuthorizationService();
 
-    public ServiceResult<User> updateProfile(long userId, String fullName, String phone, String district, String address) {
+    public ServiceResult<User> updateProfile(long userId, String fullName, String phone, String district, String address, String guardianName, String guardianPhone) {
         if (ValidationUtil.isBlank(fullName) || fullName.trim().length() < 3) return ServiceResult.failure("Enter your full name.");
         if (!ValidationUtil.isValidPhone(phone)) return ServiceResult.failure("Enter a valid Bangladeshi mobile number.");
         if (ValidationUtil.isBlank(district)) return ServiceResult.failure("District is required.");
         try {
             authorizationService.requireSelfOrAdmin(userId);
-            userDAO.updateProfile(userId, fullName, phone, district, address);
+            userDAO.updateProfile(userId, fullName, phone, district, address, guardianName, guardianPhone);
             User updated = userDAO.findById(userId).orElseThrow(() -> new SQLException("User not found after update."));
             return ServiceResult.success("Profile updated.", updated);
         } catch (SQLException e) {
@@ -48,11 +48,11 @@ public final class ProfileService {
     }
 
     /** Kept well below MEDIUMBLOB's real 16MB ceiling -- a profile photo has no business being that large. */
-    private static final int MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+    private static final int MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
     public ServiceResult<Void> updatePhoto(long userId, byte[] photoBytes) {
         if (photoBytes != null && photoBytes.length > MAX_PHOTO_BYTES) {
-            return ServiceResult.failure("Photo must be smaller than 2 MB. Try a smaller image.");
+            return ServiceResult.failure("Photo must be smaller than 5 MB. Try a smaller image.");
         }
         try {
             authorizationService.requireSelfOrAdmin(userId);

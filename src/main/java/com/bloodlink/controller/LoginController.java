@@ -3,12 +3,15 @@ package com.bloodlink.controller;
 import com.bloodlink.model.Role;
 import com.bloodlink.service.AuthService;
 import com.bloodlink.util.BackgroundTasks;
+import com.bloodlink.util.LogoManager;
 import com.bloodlink.util.SceneManager;
 import com.bloodlink.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 
 public final class LoginController {
+    @FXML private ImageView appLogoView;
     @FXML private ComboBox<Role> roleCombo;
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
@@ -20,6 +23,7 @@ public final class LoginController {
     @FXML private void initialize() {
         roleCombo.getItems().setAll(Role.DONOR, Role.REQUESTER, Role.ADMIN);
         roleCombo.setValue(Role.DONOR);
+        LogoManager.applyLogo(appLogoView);
         errorLabel.setText("");
         passwordField.setOnAction(event -> signIn());
     }

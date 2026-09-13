@@ -11,9 +11,12 @@ import java.util.Optional;
 public final class UserDAO {
     private static final String USER_SELECT = """
             SELECT u.id, u.full_name, u.email, u.password_hash, u.phone, u.district, u.address,
-                   u.role, u.approved, u.active, u.created_at,
+                   u.role, u.approved, u.active, u.created_at, u.nid_number, u.guardian_name, u.guardian_phone,
                    d.blood_group, d.birth_date, d.weight_kg, d.last_donation_date,
-                   d.availability_status, d.verified_donation_count, d.reference_hospital_id
+                   d.availability_status, d.verified_donation_count, d.reference_hospital_id,
+                   d.height_cm, d.chronic_conditions, d.recent_surgery, d.recent_surgery_details,
+                   d.recent_tattoo, d.recent_tattoo_details, d.current_medications, d.current_medications_details,
+                   d.recent_illness, d.recent_illness_details, d.recent_pregnancy, d.recent_pregnancy_details
             FROM users u
             LEFT JOIN donor_profiles d ON d.user_id = u.id
             """;
@@ -95,13 +98,16 @@ public final class UserDAO {
 
     public long register(RegistrationData data, String passwordHash) throws SQLException {
         String userSql = """
-                INSERT INTO users(full_name, email, password_hash, phone, district, address, role, approved, active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)
+                INSERT INTO users(full_name, email, password_hash, phone, district, address, role, approved, active, nid_number, guardian_name, guardian_phone, photo)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?)
                 """;
         String donorSql = """
                 INSERT INTO donor_profiles(user_id, blood_group, birth_date, weight_kg, last_donation_date,
-                                           availability_status, verified_donation_count)
-                VALUES (?, ?, ?, ?, ?, 'BUSY', 0)
+                                           availability_status, verified_donation_count, height_cm, chronic_conditions,
+                                           recent_surgery, recent_surgery_details, recent_tattoo, recent_tattoo_details,
+                                           current_medications, current_medications_details, recent_illness, recent_illness_details,
+                                           recent_pregnancy, recent_pregnancy_details)
+                VALUES (?, ?, ?, ?, ?, 'BUSY', 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);
@@ -116,6 +122,10 @@ public final class UserDAO {
                     statement.setString(6, data.address() == null ? "" : data.address().trim());
                     statement.setString(7, data.role().name());
                     statement.setBoolean(8, data.role() == Role.REQUESTER);
+                    statement.setString(9, data.nidNumber() == null ? null : data.nidNumber().trim());
+                    statement.setString(10, data.guardianName() == null ? null : data.guardianName().trim());
+                    statement.setString(11, data.guardianPhone() == null ? null : data.guardianPhone().trim());
+                    if (data.profilePhoto() == null) statement.setNull(12, Types.BLOB); else statement.setBytes(12, data.profilePhoto());
                     statement.executeUpdate();
                     try (ResultSet keys = statement.getGeneratedKeys()) {
                         if (!keys.next()) throw new SQLException("Registration did not return a user ID.");
@@ -129,6 +139,18 @@ public final class UserDAO {
                         statement.setObject(3, data.birthDate());
                         statement.setDouble(4, data.weightKg());
                         statement.setObject(5, data.lastDonationDate());
+                        if (data.heightCm() != null) statement.setDouble(6, data.heightCm()); else statement.setNull(6, Types.DECIMAL);
+                        statement.setString(7, data.chronicConditions());
+                        statement.setBoolean(8, data.recentSurgery());
+                        statement.setString(9, data.recentSurgeryDetails());
+                        statement.setBoolean(10, data.recentTattoo());
+                        statement.setString(11, data.recentTattooDetails());
+                        statement.setBoolean(12, data.currentMedications());
+                        statement.setString(13, data.currentMedicationsDetails());
+                        statement.setBoolean(14, data.recentIllness());
+                        statement.setString(15, data.recentIllnessDetails());
+                        statement.setBoolean(16, data.recentPregnancy());
+                        statement.setString(17, data.recentPregnancyDetails());
                         statement.executeUpdate();
                     }
                 }
@@ -144,8 +166,8 @@ public final class UserDAO {
         }
     }
 
-    public void updateProfile(long userId, String fullName, String phone, String district, String address) throws SQLException {
-        String sql = "UPDATE users SET full_name=?, phone=?, district=?, address=? WHERE id=?";
+    public void updateProfile(long userId, String fullName, String phone, String district, String address, String guardianName, String guardianPhone) throws SQLException {
+        String sql = "UPDATE users SET full_name=?, phone=?, district=?, address=?, guardian_name=?, guardian_phone=? WHERE id=?";
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -153,7 +175,9 @@ public final class UserDAO {
                 statement.setString(2, phone.trim());
                 statement.setString(3, district.trim());
                 statement.setString(4, address == null ? "" : address.trim());
-                statement.setLong(5, userId);
+                statement.setString(5, guardianName == null ? "" : guardianName.trim());
+                statement.setString(6, guardianPhone == null ? "" : guardianPhone.trim());
+                statement.setLong(7, userId);
                 if (statement.executeUpdate() == 0) throw new SQLException("User profile not found.");
                 new AuditDAO().log(connection, userId, "UPDATE_PROFILE", "USER", userId, "Contact profile updated");
                 connection.commit();
@@ -231,19 +255,36 @@ public final class UserDAO {
         boolean approved = rs.getBoolean("approved");
         boolean active = rs.getBoolean("active");
         LocalDateTime created = rs.getTimestamp("created_at").toLocalDateTime();
+        String nidNumber = rs.getString("nid_number");
+        String guardianName = rs.getString("guardian_name");
+        String guardianPhone = rs.getString("guardian_phone");
         return switch (role) {
             case DONOR -> {
                 long referenceHospitalIdValue = rs.getLong("reference_hospital_id");
                 boolean referenceHospitalIdWasNull = rs.wasNull();
-                yield new Donor(id, name, email, phone, district, address, approved, active, created,
+                Double heightCmValue = rs.getDouble("height_cm");
+                boolean heightCmWasNull = rs.wasNull();
+                yield new Donor(id, name, email, phone, district, address, approved, active, created, nidNumber, guardianName, guardianPhone,
                         BloodGroup.valueOf(rs.getString("blood_group")), rs.getObject("birth_date", LocalDate.class),
                         rs.getDouble("weight_kg"), rs.getObject("last_donation_date", LocalDate.class),
                         AvailabilityStatus.valueOf(rs.getString("availability_status")),
                         rs.getInt("verified_donation_count"),
-                        referenceHospitalIdWasNull ? null : referenceHospitalIdValue);
+                        referenceHospitalIdWasNull ? null : referenceHospitalIdValue,
+                        heightCmWasNull ? null : heightCmValue,
+                        rs.getString("chronic_conditions"),
+                        rs.getBoolean("recent_surgery"),
+                        rs.getString("recent_surgery_details"),
+                        rs.getBoolean("recent_tattoo"),
+                        rs.getString("recent_tattoo_details"),
+                        rs.getBoolean("current_medications"),
+                        rs.getString("current_medications_details"),
+                        rs.getBoolean("recent_illness"),
+                        rs.getString("recent_illness_details"),
+                        rs.getBoolean("recent_pregnancy"),
+                        rs.getString("recent_pregnancy_details"));
             }
-            case REQUESTER -> new Requester(id, name, email, phone, district, address, approved, active, created);
-            case ADMIN -> new Admin(id, name, email, phone, district, address, approved, active, created);
+            case REQUESTER -> new Requester(id, name, email, phone, district, address, approved, active, created, nidNumber, guardianName, guardianPhone);
+            case ADMIN -> new Admin(id, name, email, phone, district, address, approved, active, created, nidNumber, guardianName, guardianPhone);
         };
     }
 }

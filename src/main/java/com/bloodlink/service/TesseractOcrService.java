@@ -93,7 +93,7 @@ public final class TesseractOcrService implements OcrService {
             return NidExtraction.failure("Could not confidently detect any fields on this card. " +
                     "Try a clearer photo, or fill in your details manually.");
         }
-        return new NidExtraction(true, name, dob, bloodGroup, address, nid == null ? null : maskNid(nid), null);
+        return new NidExtraction(true, name, dob, bloodGroup, address, nid, null);
     }
 
     private String firstGroup(Pattern pattern, String text) {
@@ -109,8 +109,4 @@ public final class TesseractOcrService implements OcrService {
         return null;
     }
 
-    /** Only the last 4 digits are ever surfaced -- the full number is never returned, stored, or logged. */
-    private String maskNid(String nid) {
-        return nid.length() <= 4 ? "••••" : "•".repeat(nid.length() - 4) + nid.substring(nid.length() - 4);
-    }
 }

@@ -13,6 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
+
 public final class DatabaseSetup {
     private static final String SCHEMA_RESOURCE = "/com/bloodlink/sql/schema.sql";
 
@@ -364,8 +370,8 @@ public final class DatabaseSetup {
             }
         }
         String sql = """
-                INSERT INTO users(full_name,email,password_hash,phone,district,address,role,approved,active)
-                VALUES(?,?,?,?,?,?,?,?,?)
+                INSERT INTO users(full_name,email,password_hash,phone,district,address,role,approved,active,photo)
+                VALUES(?,?,?,?,?,?,?,?,?,?)
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, name);
@@ -377,6 +383,7 @@ public final class DatabaseSetup {
             statement.setString(7, role.name());
             statement.setBoolean(8, approved);
             statement.setBoolean(9, active);
+            statement.setBytes(10, generateRandomPhoto(name));
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) return keys.getLong(1);
@@ -494,6 +501,34 @@ public final class DatabaseSetup {
             if (entityId == null) statement.setNull(4, Types.BIGINT); else statement.setLong(4, entityId);
             statement.setString(5, details);
             statement.executeUpdate();
+        }
+    }
+
+    private static byte[] generateRandomPhoto(String name) {
+        try {
+            int size = 150;
+            BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = image.createGraphics();
+            // Random vibrant background color
+            float hue = (float) Math.random();
+            g2d.setColor(Color.getHSBColor(hue, 0.6f, 0.8f));
+            g2d.fillRect(0, 0, size, size);
+            
+            // Draw initials
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 60));
+            String initials = name != null && name.length() > 0 ? String.valueOf(name.charAt(0)).toUpperCase() : "U";
+            java.awt.FontMetrics fm = g2d.getFontMetrics();
+            int x = (size - fm.stringWidth(initials)) / 2;
+            int y = (fm.getAscent() + (size - (fm.getAscent() + fm.getDescent())) / 2);
+            g2d.drawString(initials, x, y);
+            g2d.dispose();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            return null;
         }
     }
 

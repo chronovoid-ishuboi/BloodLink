@@ -13,9 +13,13 @@ public abstract class User {
     private boolean approved;
     private boolean active;
     private LocalDateTime createdAt;
+    private String nidNumber;
+    private String guardianName;
+    private String guardianPhone;
 
     protected User(long id, String fullName, String email, String phone, String district,
-                   String address, Role role, boolean approved, boolean active, LocalDateTime createdAt) {
+                   String address, Role role, boolean approved, boolean active, LocalDateTime createdAt,
+                   String nidNumber, String guardianName, String guardianPhone) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -26,6 +30,9 @@ public abstract class User {
         this.approved = approved;
         this.active = active;
         this.createdAt = createdAt;
+        this.nidNumber = nidNumber;
+        this.guardianName = guardianName;
+        this.guardianPhone = guardianPhone;
     }
 
     public long getId() { return id; }
@@ -46,4 +53,10 @@ public abstract class User {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getNidNumber() { return nidNumber; }
+    public void setNidNumber(String nidNumber) { this.nidNumber = nidNumber; }
+    public String getGuardianName() { return guardianName; }
+    public void setGuardianName(String guardianName) { this.guardianName = guardianName; }
+    public String getGuardianPhone() { return guardianPhone; }
+    public void setGuardianPhone(String guardianPhone) { this.guardianPhone = guardianPhone; }
 }

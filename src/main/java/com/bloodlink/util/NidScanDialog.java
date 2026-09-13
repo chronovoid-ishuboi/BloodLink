@@ -29,7 +29,7 @@ public final class NidScanDialog {
 
     private NidScanDialog() { }
 
-    public record NidReviewResult(String name, LocalDate birthDate, com.bloodlink.model.BloodGroup bloodGroup, String address) { }
+    public record NidReviewResult(String name, LocalDate birthDate, com.bloodlink.model.BloodGroup bloodGroup, String address, String nidNumber) { }
 
     /** Returns empty if the user cancels the file picker or the review dialog -- never partial/unconfirmed data. */
     public static Optional<NidReviewResult> show(Window owner) {
@@ -66,7 +66,7 @@ public final class NidScanDialog {
 
         Label nidLabel = new Label(extraction.detectedNidNumberMasked() == null
                 ? "NID number: not detected"
-                : "NID number on card: " + extraction.detectedNidNumberMasked() + " (shown for your reference only -- never stored)");
+                : "NID number on card: " + extraction.detectedNidNumberMasked());
         nidLabel.setWrapText(true);
 
         Label statusLabel = new Label(extraction.success() ? "" : extraction.failureReason());
@@ -74,7 +74,6 @@ public final class NidScanDialog {
         statusLabel.getStyleClass().add(extraction.success() ? "helper-text" : "error-text");
 
         VBox content = new VBox(10,
-                new Label("This is identity-registration assistance only -- not medical or eligibility verification."),
                 new Label("Detected name (edit if wrong)"), nameField,
                 new Label("Detected date of birth (edit if wrong)"), dobPicker,
                 new Label("Detected blood group (edit if wrong)"), bloodGroupCombo,
@@ -86,7 +85,7 @@ public final class NidScanDialog {
         ((Button) dialog.getDialogPane().lookupButton(ButtonType.OK)).setText("Use This Information");
 
         dialog.setResultConverter(button ->
-                button == ButtonType.OK ? new NidReviewResult(nameField.getText(), dobPicker.getValue(), bloodGroupCombo.getValue(), addressField.getText()) : null);
+                button == ButtonType.OK ? new NidReviewResult(nameField.getText(), dobPicker.getValue(), bloodGroupCombo.getValue(), addressField.getText(), extraction.detectedNidNumber()) : null);
         return dialog;
     }
 }

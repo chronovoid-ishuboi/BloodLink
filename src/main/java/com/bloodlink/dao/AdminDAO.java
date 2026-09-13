@@ -88,11 +88,11 @@ public final class AdminDAO {
         return data;
     }
 
-    public PagedResult<AdminUserRow> findUsers(String search, int page) throws SQLException {
+    public PagedResult<AdminUserRow> findUsers(String search, int page, boolean pendingOnly) throws SQLException {
         String term = search == null ? "" : search.trim().toLowerCase();
         String like = "%" + term + "%";
         int safePage = Math.max(1, page);
-        String whereClause = "(?='' OR LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(district) LIKE ?)";
+        String whereClause = "(?='' OR LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(district) LIKE ?) " + (pendingOnly ? "AND approved=FALSE" : "");
         long total;
         try (Connection connection = DBConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE " + whereClause)) {
@@ -167,6 +167,10 @@ public final class AdminDAO {
                     boolean donorIdWasNull = rs.wasNull();
                     long hospitalIdValue = rs.getLong("hospital_id");
                     boolean hospitalIdWasNull = rs.wasNull();
+                    double latVal = rs.getDouble("hospital_latitude");
+                    Double hLat = rs.wasNull() ? null : latVal;
+                    double lngVal = rs.getDouble("hospital_longitude");
+                    Double hLng = rs.wasNull() ? null : lngVal;
                     Timestamp donorConfirmed = rs.getTimestamp("donor_confirmed_at");
                     Timestamp requesterConfirmed = rs.getTimestamp("requester_confirmed_at");
                     Timestamp cat = rs.getTimestamp("created_at");
@@ -178,7 +182,7 @@ public final class AdminDAO {
                             BloodGroup.valueOf(rs.getString("blood_group")), rs.getInt("units_needed"), rs.getInt("units_fulfilled"),
                             Urgency.valueOf(rs.getString("urgency")), rs.getString("hospital_name"),
                             hospitalIdWasNull ? null : hospitalIdValue,
-                            (Double) rs.getObject("hospital_latitude"), (Double) rs.getObject("hospital_longitude"),
+                            hLat, hLng,
                             rs.getString("district"),
                             rs.getObject("deadline", LocalDate.class), rs.getString("notes"),
                             RequestStatus.valueOf(rs.getString("status")),
