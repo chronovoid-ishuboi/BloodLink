@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- <path d="M99,99 L1,1 Z"/> commented out, must be ignored -->
+  <defs><linearGradient id="g"/></defs>
+  <text x="2" y="2">not geometry</text>
+  <path d="M1,1 L5,5 Z"/>
+</svg>

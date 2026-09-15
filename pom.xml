@@ -60,6 +60,19 @@
             <artifactId>tess4j</artifactId>
             <version>5.16.0</version>
         </dependency>
+        <!--
+          JSON parsing for the hand-editable badge manifest
+          (resources/com/bloodlink/badges/badges.json). A tiny, dependency-free
+          library; chosen over hand-rolling a parser so a user's malformed edit
+          produces a clean exception that BadgeRegistry can fall back from,
+          rather than silently mis-parsing. Not a network dependency: the
+          manifest is a local classpath resource, so the app stays fully offline.
+        -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240303</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

@@ -1,172 +1,562 @@
-/* BloodLink design system: deep teal for trust, rose-red for emergency actions, warm neutral surfaces. */
+/* ============================================================================
+   BloodLink design system -- "clinical green".
+
+   Replaces the previous teal/rose scheme. The story: deep clinical green for
+   trust, structure and every primary action; crimson kept strictly for
+   emergency, urgency and destructive states, so red always MEANS something on
+   screen instead of being decoration. Backgrounds are a pale mint off-white
+   rather than stark white, so cards lift off the page without needing heavy
+   shadows.
+
+   Everything is expressed as looked-up colour tokens on .root below. Nodes
+   built in Java must use these style classes rather than hand-rolled hex in
+   setStyle() calls -- the whole colour story lives in this one file.
+
+   JavaFX CSS notes that shaped this file (they are NOT the same as browser CSS):
+     - There is no `transition` property. Hover/press states are discrete rule
+       swaps; real motion (pulse, tab underline) is done in Java with Timeline.
+     - `-fx-background-radius: 50%` is not supported. Circles use a large px
+       radius (999) or a Circle clip in Java.
+     - ImageView is not a Region, so background/border/radius do not apply to
+       it. Circular photo crops are done with a Circle clip in Java.
+   ========================================================================= */
+
 .root {
     -fx-font-family: "Inter", "Segoe UI", Arial, sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #17343a;
-    -fx-accent: #176b6a;
-    -fx-focus-color: #4f9f9a;
-    -fx-faint-focus-color: rgba(79,159,154,0.18);
+
+    /* --- Brand greens ---------------------------------------------------- */
+    -green-900: #0B3D28;
+    -green-800: #0F5C3C;
+    -green-700: #146B47;
+    -green-600: #1B7A4D;
+    -green-500: #23935D;
+    -green-300: #7CC3A0;
+    -green-100: #DDF0E6;
+    -green-50:  #EFF8F3;
+
+    /* --- Emergency crimson (urgency, danger, destructive) ---------------- */
+    -red-700: #96202F;
+    -red-600: #B92A3B;
+    -red-500: #D33A4B;
+    -red-300: #F0A5AE;
+    -red-100: #FBE2E5;
+
+    /* --- Semantic states -- one accessible colour each, reused everywhere - */
+    -state-success: #14734C;
+    -state-success-bg: #DDF0E6;
+    -state-pending: #8A5A11;
+    -state-pending-bg: #FCEFD6;
+    -state-danger: #96202F;
+    -state-danger-bg: #FBE2E5;
+    -state-info: #1D5A73;
+    -state-info-bg: #DCEDF4;
+    -state-neutral: #566B62;
+    -state-neutral-bg: #E7EEE9;
+
+    /* --- Surfaces and text ----------------------------------------------- */
+    -surface: #FFFFFF;
+    -surface-sunken: #F2F8F4;
+    -page-bg: #F4F8F5;
+    -hairline: #DCE8E0;
+    -text-primary: #12291F;
+    -text-secondary: #5A7266;
+    -text-muted: #7B8F85;
+    -text-on-dark: #F1FAF5;
+
+    -fx-text-fill: -text-primary;
+    -fx-accent: -green-600;
+    -fx-focus-color: -green-500;
+    -fx-faint-focus-color: rgba(35,147,93,0.18);
 }
-.app-background { -fx-background-color: linear-gradient(to bottom right, #f4f7f6, #e2eceb); }
-.auth-background { -fx-background-color: linear-gradient(to bottom right, #e8f2ef, #f9f4f1); -fx-padding: 32; }
-.auth-card { -fx-background-color: white; -fx-background-radius: 24; -fx-effect: dropshadow(gaussian, rgba(20,40,45,0.25), 40, 0.2, 0, 15); }
-.brand-panel { -fx-background-color: linear-gradient(to bottom right, #176b6a, #0b3d3c); -fx-background-radius: 24 0 0 24; -fx-padding: 46; }
-.brand-mark { -fx-font-size: 52px; -fx-text-fill: #ff8c82; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 5); }
+
+/* ============================================================================
+   Page shells
+   ========================================================================= */
+.app-background { -fx-background-color: linear-gradient(to bottom right, #F4F8F5, #E4EFE8); }
+.auth-background { -fx-background-color: linear-gradient(to bottom right, #E7F3EB, #F6FAF7); -fx-padding: 32; }
+.auth-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(11,61,40,0.22), 42, 0.18, 0, 16);
+}
+
+/* The login brand panel: deep green slab with the teardrop motif, asymmetric
+   against the white form half. */
+.brand-panel {
+    -fx-background-color: linear-gradient(to bottom right, -green-700, -green-900);
+    -fx-background-radius: 24 0 0 24;
+    -fx-padding: 46;
+}
+.brand-mark { -fx-font-size: 52px; -fx-text-fill: -red-300; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 5); }
 .brand-title { -fx-font-size: 38px; -fx-font-weight: 900; -fx-text-fill: white; }
-.brand-tagline { -fx-font-size: 16px; -fx-text-fill: #c9e4df; }
-.brand-copy { -fx-font-size: 14px; -fx-line-spacing: 5px; -fx-text-fill: #e7f4f1; }
+.brand-tagline { -fx-font-size: 16px; -fx-text-fill: -green-300; }
+.brand-copy { -fx-font-size: 14px; -fx-line-spacing: 5px; -fx-text-fill: -text-on-dark; }
 .auth-form-panel { -fx-padding: 48; }
-.simple-header, .topbar { -fx-background-color: white; -fx-padding: 14 22; -fx-border-color: transparent transparent #dfe8e6 transparent; -fx-border-width: 0 0 1 0; }
-.topbar-mark { -fx-font-size: 25px; -fx-text-fill: #a63b45; }
-.header-brand { -fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #164e54; }
-.topbar-title { -fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: #35575c; }
-.page-title { -fx-font-size: 25px; -fx-font-weight: 800; -fx-text-fill: #143e44; }
-.section-title { -fx-font-size: 17px; -fx-font-weight: 700; -fx-text-fill: #173f45; }
-.field-label, .stat-label { -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #587176; }
-.muted-text { -fx-text-fill: #6f8387; }
-.helper-text { -fx-text-fill: #75898c; -fx-font-size: 11px; }
-.error-text { -fx-text-fill: #a32938; -fx-font-weight: 600; }
-.message-text { -fx-text-fill: #176b6a; -fx-font-weight: 600; }
-.content-card, .stat-card { -fx-background-color: white; -fx-background-radius: 16; -fx-padding: 18; -fx-border-color: #e1e9e7; -fx-border-radius: 16; -fx-effect: dropshadow(gaussian, rgba(20,62,68,0.12), 15, 0.1, 0, 5); }
+
+/* Signature motif #2: the pulse/ECG line. Drawn as an SVGPath (see Icons.PULSE)
+   and used in the brand panel, section dividers and empty states so the shape
+   language repeats instead of living only in the logo. */
+.pulse-line { -fx-stroke: -green-300; -fx-stroke-width: 2; -fx-fill: transparent; }
+.pulse-line-muted { -fx-stroke: -green-100; -fx-stroke-width: 2; -fx-fill: transparent; }
+.pulse-divider { -fx-stroke: -hairline; -fx-stroke-width: 1.5; -fx-fill: transparent; }
+
+.simple-header, .topbar {
+    -fx-background-color: -surface;
+    -fx-padding: 14 22;
+    -fx-border-color: transparent transparent -hairline transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.topbar-mark { -fx-font-size: 25px; -fx-text-fill: -red-600; }
+.header-brand { -fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: -green-800; }
+.topbar-title { -fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: -text-secondary; }
+
+/* ============================================================================
+   Typography
+   ========================================================================= */
+.page-title { -fx-font-size: 25px; -fx-font-weight: 800; -fx-text-fill: -green-900; }
+.section-title { -fx-font-size: 17px; -fx-font-weight: 700; -fx-text-fill: -green-800; }
+.field-label, .stat-label { -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: -text-secondary; }
+.muted-text { -fx-text-fill: -text-muted; }
+.helper-text { -fx-text-fill: -text-muted; -fx-font-size: 11px; }
+.error-text { -fx-text-fill: -state-danger; -fx-font-weight: 600; }
+.message-text { -fx-text-fill: -green-700; -fx-font-weight: 600; }
+
+/* ============================================================================
+   Cards and stat tiles
+   ========================================================================= */
+.content-card, .stat-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 16;
+    -fx-padding: 18;
+    -fx-border-color: -hairline;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(11,61,40,0.10), 15, 0.1, 0, 5);
+}
 .stat-card { -fx-min-height: 105px; }
-.stat-card:hover { -fx-effect: dropshadow(gaussian, rgba(20,62,68,0.2), 20, 0.15, 0, 8); }
-.stat-value, .stat-value-accent { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #164e54; }
-.stat-value-accent { -fx-text-fill: #e03b4b; }
-.subtle-panel { -fx-background-color: linear-gradient(to bottom, #f3f8f7, #ebf3f2); -fx-background-radius: 14; -fx-padding: 16; -fx-border-color: #dce9e6; -fx-border-radius: 14; }
-.pill-light, .pill-teal, .notification-count { -fx-background-radius: 999; -fx-padding: 5 10; -fx-font-size: 11px; -fx-font-weight: 800; }
+.stat-card:hover { -fx-effect: dropshadow(gaussian, rgba(11,61,40,0.18), 22, 0.15, 0, 9); }
+.stat-value, .stat-value-accent { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: -green-800; }
+.stat-value-accent { -fx-text-fill: -red-600; }
+
+/* Icon-fronted stat tile: a tinted rounded square holding the glyph, sitting
+   left of the number rather than a bare centred stack. */
+.stat-icon-well {
+    -fx-background-color: -green-100;
+    -fx-background-radius: 12;
+    -fx-min-width: 38; -fx-min-height: 38;
+    -fx-max-width: 38; -fx-max-height: 38;
+    -fx-alignment: center;
+}
+.stat-icon-well-accent { -fx-background-color: -red-100; }
+.stat-icon { -fx-fill: -green-700; }
+.stat-icon-accent { -fx-fill: -red-600; }
+
+.subtle-panel {
+    -fx-background-color: linear-gradient(to bottom, -green-50, #E8F3EC);
+    -fx-background-radius: 14;
+    -fx-padding: 16;
+    -fx-border-color: -green-100;
+    -fx-border-radius: 14;
+}
+
+/* ============================================================================
+   Pills and counters
+   ========================================================================= */
+.pill-light, .pill-teal, .pill-green, .notification-count {
+    -fx-background-radius: 999; -fx-padding: 5 10; -fx-font-size: 11px; -fx-font-weight: 800;
+}
 .pill-light { -fx-background-color: rgba(255,255,255,0.2); -fx-text-fill: white; }
-.pill-teal { -fx-background-color: #dff0ec; -fx-text-fill: #176b6a; }
-.notification-count { -fx-background-color: #e03b4b; -fx-text-fill: white; -fx-min-width: 28; -fx-alignment: center; }
-.status-success { -fx-text-fill: #1e7a57; }
-.status-warning { -fx-text-fill: #b46b16; }
+/* .pill-teal kept as an alias of .pill-green so any FXML/Java still naming the
+   old class keeps rendering correctly after the palette change. */
+.pill-teal, .pill-green { -fx-background-color: -green-100; -fx-text-fill: -green-700; }
+.notification-count { -fx-background-color: -red-600; -fx-text-fill: white; -fx-min-width: 28; -fx-alignment: center; }
+.status-success { -fx-text-fill: -state-success; }
+.status-warning { -fx-text-fill: -state-pending; }
+
+/* ============================================================================
+   Inputs
+   ========================================================================= */
 .text-field, .password-field, .text-area, .combo-box, .date-picker, .spinner {
-    -fx-background-color: #fbfcfc;
-    -fx-border-color: #cfdcda;
+    -fx-background-color: #FBFDFC;
+    -fx-border-color: #C9DCD1;
     -fx-border-radius: 9;
     -fx-background-radius: 9;
     -fx-min-height: 40;
 }
-.text-field:focused, .password-field:focused, .text-area:focused, .combo-box:focused, .date-picker:focused, .spinner:focused { -fx-border-color: #3b8f8b; -fx-border-width: 1.5; -fx-background-color: white; }
+.text-field:focused, .password-field:focused, .text-area:focused,
+.combo-box:focused, .date-picker:focused, .spinner:focused {
+    -fx-border-color: -green-500; -fx-border-width: 1.5; -fx-background-color: -surface;
+}
 .text-area .content { -fx-background-color: transparent; }
-.button { -fx-cursor: hand; -fx-background-radius: 12; -fx-padding: 10 20; -fx-font-weight: 800; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 5, 0, 0, 2); }
-.button-primary { -fx-background-color: linear-gradient(to right, #176b6a, #208b89); -fx-text-fill: white; }
-.button-primary:hover { -fx-background-color: linear-gradient(to right, #1b8180, #28a7a4); -fx-effect: dropshadow(gaussian, rgba(23,107,106,0.4), 8, 0, 0, 4); }
-.button-primary:pressed { -fx-background-color: #0b4749; -fx-effect: none; }
-.button-secondary { -fx-background-color: linear-gradient(to bottom, #e8f1ef, #d6e8e5); -fx-text-fill: #175b5c; }
-.button-secondary:hover { -fx-background-color: linear-gradient(to bottom, #d6e8e5, #c4deda); }
-.button-ghost { -fx-background-color: transparent; -fx-text-fill: #48686d; -fx-border-color: #cbd9d7; -fx-border-radius: 12; -fx-effect: none; }
-.button-ghost:hover { -fx-background-color: #eef4f3; }
-.button-danger { -fx-background-color: linear-gradient(to right, #d93d4f, #e85d6d); -fx-text-fill: white; }
-.button-danger:hover { -fx-background-color: linear-gradient(to right, #e5475a, #f56d7e); -fx-effect: dropshadow(gaussian, rgba(217,61,79,0.4), 8, 0, 0, 4); }
-.button-danger-outline { -fx-background-color: transparent; -fx-text-fill: #d93d4f; -fx-border-color: #f0a3ab; -fx-border-radius: 12; -fx-effect: none; }
+
+/* Field with a leading glyph: the icon sits in this well, the input loses its
+   own left rounding so the pair reads as one control. */
+.input-with-icon {
+    -fx-background-color: #FBFDFC;
+    -fx-border-color: #C9DCD1;
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 0 12;
+}
+.input-with-icon:focus-within { -fx-border-color: -green-500; -fx-border-width: 1.5; -fx-background-color: -surface; }
+.input-with-icon .text-field, .input-with-icon .password-field {
+    -fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;
+}
+.input-with-icon .text-field:focused, .input-with-icon .password-field:focused {
+    -fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0;
+}
+.field-icon { -fx-fill: -text-muted; }
+
+/* ============================================================================
+   Buttons
+   ========================================================================= */
+.button { -fx-cursor: hand; -fx-background-radius: 12; -fx-padding: 10 20; -fx-font-weight: 800; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.13), 5, 0, 0, 2); }
+.button-primary { -fx-background-color: linear-gradient(to right, -green-700, -green-500); -fx-text-fill: white; }
+.button-primary:hover { -fx-background-color: linear-gradient(to right, -green-600, #2AA96B); -fx-effect: dropshadow(gaussian, rgba(20,107,71,0.42), 9, 0, 0, 4); }
+.button-primary:pressed { -fx-background-color: -green-900; -fx-effect: none; }
+.button-secondary { -fx-background-color: linear-gradient(to bottom, -green-50, -green-100); -fx-text-fill: -green-800; }
+.button-secondary:hover { -fx-background-color: linear-gradient(to bottom, -green-100, #CCE7D8); }
+.button-secondary:pressed { -fx-background-color: #BCDDCB; -fx-effect: none; }
+.button-ghost { -fx-background-color: transparent; -fx-text-fill: -text-secondary; -fx-border-color: #C7D9CE; -fx-border-radius: 12; -fx-effect: none; }
+.button-ghost:hover { -fx-background-color: -green-50; }
+.button-danger { -fx-background-color: linear-gradient(to right, -red-600, -red-500); -fx-text-fill: white; }
+.button-danger:hover { -fx-background-color: linear-gradient(to right, #C82F42, #E24557); -fx-effect: dropshadow(gaussian, rgba(185,42,59,0.42), 9, 0, 0, 4); }
+.button-danger-outline { -fx-background-color: transparent; -fx-text-fill: -red-600; -fx-border-color: -red-300; -fx-border-radius: 12; -fx-effect: none; }
+.button-danger-outline:hover { -fx-background-color: -red-100; }
 .button:disabled { -fx-opacity: 0.55; -fx-cursor: default; }
-.hyperlink { -fx-text-fill: #176b6a; -fx-font-weight: 700; -fx-border-color: transparent; }
+
+/* Icon carried inside a button inherits that button's text colour role. */
+.button-icon-light { -fx-fill: white; }
+.button-icon-dark { -fx-fill: -green-800; }
+.button-icon-muted { -fx-fill: -text-secondary; }
+.button-icon-danger { -fx-fill: -red-600; }
+
+.hyperlink { -fx-text-fill: -green-700; -fx-font-weight: 700; -fx-border-color: transparent; }
+
+/* ============================================================================
+   Tabs -- icon + label, with a green active slab
+   ========================================================================= */
 .workspace-tabs .tab-header-area { -fx-padding: 6 18 0 18; }
-.workspace-tabs .tab-header-background { -fx-background-color: white; -fx-border-color: transparent transparent #dfe8e6 transparent; }
+.workspace-tabs .tab-header-background { -fx-background-color: -surface; -fx-border-color: transparent transparent -hairline transparent; }
 .workspace-tabs .tab { -fx-background-color: transparent; -fx-padding: 8 16; }
-.workspace-tabs .tab:selected { -fx-background-color: #eaf4f1; -fx-background-radius: 10 10 0 0; }
-.workspace-tabs .tab:selected .tab-label { -fx-text-fill: #176b6a; -fx-font-weight: 800; }
-.table-view { -fx-background-color: transparent; -fx-border-color: #e0e9e7; -fx-border-radius: 12; -fx-background-radius: 12; }
-.table-view .column-header-background { -fx-background-color: #edf5f3; -fx-background-radius: 12 12 0 0; }
+.workspace-tabs .tab:hover { -fx-background-color: -green-50; -fx-background-radius: 10 10 0 0; }
+.workspace-tabs .tab:selected { -fx-background-color: -green-100; -fx-background-radius: 10 10 0 0; }
+.workspace-tabs .tab:selected .tab-label { -fx-text-fill: -green-800; -fx-font-weight: 800; }
+.workspace-tabs .tab-label { -fx-text-fill: -text-secondary; -fx-font-weight: 700; }
+.tab-icon { -fx-fill: -text-secondary; }
+.workspace-tabs .tab:selected .tab-icon { -fx-fill: -green-700; }
+/* The animated underline under the selected tab (width is driven from Java). */
+.tab-underline { -fx-fill: -green-600; }
+
+/* ============================================================================
+   Tables
+   ========================================================================= */
+.table-view { -fx-background-color: transparent; -fx-border-color: -hairline; -fx-border-radius: 12; -fx-background-radius: 12; }
+.table-view .column-header-background { -fx-background-color: -green-50; -fx-background-radius: 12 12 0 0; }
 .table-view .column-header, .table-view .filler { -fx-background-color: transparent; -fx-size: 40; }
-.table-view .column-header .label { -fx-text-fill: #3f6065; -fx-font-weight: 800; }
-.table-row-cell { -fx-background-color: white; -fx-border-color: transparent transparent #edf2f1 transparent; -fx-cell-size: 42; }
-.table-row-cell:hover { -fx-background-color: #f4faf8; }
-.table-row-cell:selected { -fx-background-color: #dcefeb; -fx-text-background-color: #163e43; }
-.notification-list { -fx-background-color: transparent; -fx-border-color: #e0e9e7; -fx-border-radius: 12; }
-.notification-list .list-cell { -fx-background-color: white; -fx-padding: 14; -fx-border-color: transparent transparent #edf2f1 transparent; }
-.notification-list .list-cell:hover { -fx-background-color: #f4faf8; }
-.progress-bar { -fx-accent: #278b74; }
-.progress-bar .track { -fx-background-color: #e7efed; -fx-background-radius: 999; }
-.progress-bar .bar { -fx-background-radius: 999; }
-.transparent-scroll, .transparent-scroll > .viewport { -fx-background-color: transparent; }
-.chart-plot-background { -fx-background-color: transparent; }
-.chart-vertical-grid-lines, .chart-horizontal-grid-lines { -fx-stroke: #edf2f1; }
-.default-color0.chart-bar, .default-color0.chart-series-line { -fx-bar-fill: #247a79; -fx-stroke: #247a79; }
-.default-color0.chart-line-symbol { -fx-background-color: #247a79, white; }
-.separator .line { -fx-border-color: #dfe8e6; }
+.table-view .column-header .label { -fx-text-fill: -green-800; -fx-font-weight: 800; }
+.column-header-icon { -fx-fill: -green-600; }
+.table-row-cell { -fx-background-color: -surface; -fx-border-color: transparent transparent #EDF4EF transparent; -fx-cell-size: 42; }
+.table-row-cell:hover { -fx-background-color: -green-50; }
+.table-row-cell:selected { -fx-background-color: -green-100; -fx-text-background-color: -green-900; }
 
-.empty-state {
-    -fx-text-fill: #74898c;
-    -fx-font-style: italic;
-    -fx-padding: 24;
-}
-.chip {
-    -fx-background-color: #e8efee;
-    -fx-background-radius: 999;
-    -fx-padding: 4 9;
-    -fx-font-size: 10px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #466267;
-}
-.chip-none {
-    -fx-background-color: #e8efee;
-    -fx-text-fill: #6f8387;
-}
-.chip-approved, .chip-active, .chip-available, .chip-accepted,
-.chip-fulfilled, .chip-verified, .chip-gold, .chip-platinum {
-    -fx-background-color: #def2e8;
-    -fx-text-fill: #176747;
-}
-.chip-pending, .chip-notified, .chip-busy, .chip-medical-hold,
-.chip-urgent, .chip-silver, .chip-cooling-down, .chip-partially-fulfilled {
-    -fx-background-color: #fff0d7;
-    -fx-text-fill: #946016;
-}
-.chip-critical, .chip-declined, .chip-cancelled, .chip-suspended,
-.chip-expired, .chip-out-of-town, .chip-not-eligible {
-    -fx-background-color: #f8dde0;
-    -fx-text-fill: #963340;
-}
-.chip-matched, .chip-ready, .chip-donor, .chip-requester {
-    -fx-background-color: #dcefed;
-    -fx-text-fill: #176b6a;
-}
-.chip-escalated, .chip-admin, .chip-bronze {
-    -fx-background-color: #ebe3f5;
-    -fx-text-fill: #6e4a8d;
-}
-.chip-normal {
-    -fx-background-color: #e8efee;
-    -fx-text-fill: #466267;
-}
+/* ============================================================================
+   Lists
+   ========================================================================= */
+.notification-list { -fx-background-color: transparent; -fx-border-color: -hairline; -fx-border-radius: 12; }
+.notification-list .list-cell { -fx-background-color: -surface; -fx-padding: 14; -fx-border-color: transparent transparent #EDF4EF transparent; }
+.notification-list .list-cell:hover { -fx-background-color: -green-50; }
 
-/* ----------------------------------------------------------------------------
-   Profile photo avatar. New this round -- everything above is unchanged from
-   your original file.
-
-   JavaFX note: ImageView isn't a Region, so CSS background-radius/clipping
-   doesn't apply to it directly. The circular photo crop happens in Java via
-   a Circle clip (see DonorDashboardController/RequesterDashboardController's
-   applyProfilePhoto()); .avatar-photo here only adds the drop-shadow ring.
-   .avatar-initials styles the fallback badge shown when no photo is set.
-   ---------------------------------------------------------------------------- */
-.avatar-photo {
-    -fx-effect: dropshadow(gaussian, rgba(20,62,68,0.18), 8, 0.15, 0, 2);
+/* Card-style list: the ListView itself disappears and each row is a card. Used
+   by the donor/requester match lists so a collection reads as a card stack
+   rather than a table of text. */
+.card-list, .card-list > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: transparent;
 }
+.card-list { -fx-border-color: transparent; -fx-padding: 0; }
+.card-list .list-cell { -fx-padding: 0 0 10 0; -fx-background-color: transparent; }
+.card-list .list-cell:filled:selected, .card-list .list-cell:filled:hover { -fx-background-color: transparent; }
+
+/* One match card. Hover lifts it; the selected state gets a green rail on the
+   left edge rather than a fill, so the card's own content keeps its contrast. */
+.match-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 14;
+    -fx-border-color: -hairline;
+    -fx-border-radius: 14;
+    -fx-padding: 14;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(11,61,40,0.07), 10, 0.12, 0, 3);
+}
+.match-card:hover {
+    -fx-border-color: -green-300;
+    -fx-effect: dropshadow(gaussian, rgba(11,61,40,0.16), 18, 0.15, 0, 7);
+}
+.card-list .list-cell:filled:selected .match-card {
+    -fx-border-color: -green-500;
+    -fx-border-width: 1 1 1 4;
+}
+.match-card-name { -fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: -text-primary; }
+.match-card-detail { -fx-font-size: 12px; -fx-text-fill: -text-secondary; }
+.match-card-icon { -fx-fill: -text-muted; }
+.match-card-hint { -fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: -green-600; }
+
+/* Circular avatar with initials, sized by modifier class. */
 .avatar-initials {
-    -fx-background-color: #176b6a;
+    -fx-background-color: -green-700;
     -fx-background-radius: 999;
     -fx-text-fill: white;
     -fx-font-weight: 800;
     -fx-font-size: 28px;
     -fx-alignment: center;
-    -fx-min-width: 84;
-    -fx-min-height: 84;
-    -fx-max-width: 84;
-    -fx-max-height: 84;
+    -fx-min-width: 84; -fx-min-height: 84; -fx-max-width: 84; -fx-max-height: 84;
 }
-
-/* ----------------------------------------------------------------------------
-   Brand mark. New this round -- a real vector shape (JavaFX SVGPath, native,
-   zero new dependencies), replacing the previous Unicode emoji topbar mark.
-   Self-authored geometric teardrop (a bezier peak into a semicircular arc
-   base), not reproduced from any icon library. Sizing follows the icon
-   itself (roughly 28x28 units) rather than a font-size property, since
-   SVGPath has no font -- .topbar-mark below still exists for any other
-   emoji-based text that stays as-is elsewhere.
-   ---------------------------------------------------------------------------- */
-.brand-icon {
-    -fx-fill: #a63b45;
+.avatar-initials-sm {
+    -fx-background-color: -green-100;
+    -fx-text-fill: -green-800;
+    -fx-font-size: 20px;
+    -fx-min-width: 48; -fx-min-height: 48; -fx-max-width: 48; -fx-max-height: 48;
 }
+.avatar-initials-lg {
+    -fx-font-size: 36px;
+    -fx-min-width: 108; -fx-min-height: 108; -fx-max-width: 108; -fx-max-height: 108;
+}
+.avatar-photo { -fx-effect: dropshadow(gaussian, rgba(11,61,40,0.18), 8, 0.15, 0, 2); }
 
+/* ============================================================================
+   Progress / charts / scroll
+   ========================================================================= */
+.progress-bar { -fx-accent: -green-500; }
+.progress-bar .track { -fx-background-color: -green-100; -fx-background-radius: 999; }
+.progress-bar .bar { -fx-background-radius: 999; }
+.transparent-scroll, .transparent-scroll > .viewport { -fx-background-color: transparent; }
+.chart-plot-background { -fx-background-color: transparent; }
+.chart-vertical-grid-lines, .chart-horizontal-grid-lines { -fx-stroke: #E8F1EB; }
+.axis { -fx-tick-label-fill: -text-secondary; }
+.axis-label { -fx-text-fill: -text-secondary; -fx-font-weight: 700; }
+
+/* Chart series re-skinned to the green palette, with crimson kept for the
+   series most likely to read as "pressure" (second series / status slices). */
+.default-color0.chart-bar, .default-color0.chart-series-line { -fx-bar-fill: -green-600; -fx-stroke: -green-600; }
+.default-color1.chart-bar, .default-color1.chart-series-line { -fx-bar-fill: -red-500; -fx-stroke: -red-500; }
+.default-color2.chart-bar, .default-color2.chart-series-line { -fx-bar-fill: -green-300; -fx-stroke: -green-300; }
+.default-color0.chart-line-symbol { -fx-background-color: -green-600, white; }
+.default-color1.chart-line-symbol { -fx-background-color: -red-500, white; }
+.default-color0.chart-pie { -fx-pie-color: -green-600; }
+.default-color1.chart-pie { -fx-pie-color: -green-300; }
+.default-color2.chart-pie { -fx-pie-color: -state-pending; }
+.default-color3.chart-pie { -fx-pie-color: -red-500; }
+.default-color4.chart-pie { -fx-pie-color: -state-info; }
+.default-color5.chart-pie { -fx-pie-color: -green-900; }
+.default-color6.chart-pie { -fx-pie-color: -red-700; }
+.default-color7.chart-pie { -fx-pie-color: -state-neutral; }
+.chart-pie-label { -fx-fill: -text-secondary; }
+.chart-legend { -fx-background-color: transparent; }
+.separator .line { -fx-border-color: -hairline; }
+
+/* ============================================================================
+   Empty states -- a drawn illustration, not an italic apology
+   ========================================================================= */
+.empty-state {
+    -fx-text-fill: -text-muted;
+    -fx-font-style: italic;
+    -fx-padding: 24;
+}
+.empty-state-box { -fx-padding: 28 24; -fx-alignment: center; -fx-spacing: 10; }
+.empty-state-art { -fx-fill: -green-100; }
+.empty-state-art-accent { -fx-fill: -green-300; }
+.empty-state-title { -fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: -text-secondary; }
+.empty-state-hint { -fx-font-size: 12px; -fx-text-fill: -text-muted; }
+
+/* ============================================================================
+   Chips
+   ========================================================================= */
+.chip {
+    -fx-background-color: -state-neutral-bg;
+    -fx-background-radius: 999;
+    -fx-padding: 4 9;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -state-neutral;
+}
+.chip-none { -fx-background-color: -state-neutral-bg; -fx-text-fill: -text-muted; }
+.chip-approved, .chip-active, .chip-available, .chip-accepted,
+.chip-fulfilled, .chip-verified, .chip-gold, .chip-platinum {
+    -fx-background-color: -state-success-bg; -fx-text-fill: -state-success;
+}
+.chip-pending, .chip-notified, .chip-busy, .chip-medical-hold,
+.chip-urgent, .chip-silver, .chip-cooling-down, .chip-partially-fulfilled {
+    -fx-background-color: -state-pending-bg; -fx-text-fill: -state-pending;
+}
+.chip-critical, .chip-declined, .chip-cancelled, .chip-suspended,
+.chip-expired, .chip-out-of-town, .chip-not-eligible {
+    -fx-background-color: -state-danger-bg; -fx-text-fill: -state-danger;
+}
+.chip-matched, .chip-ready, .chip-donor, .chip-requester {
+    -fx-background-color: -green-100; -fx-text-fill: -green-700;
+}
+.chip-escalated, .chip-admin, .chip-bronze {
+    -fx-background-color: -state-info-bg; -fx-text-fill: -state-info;
+}
+.chip-normal { -fx-background-color: -state-neutral-bg; -fx-text-fill: -state-neutral; }
+
+/* Blood group, shown large because it is the single fact a requester scans for. */
+.chip-blood-group {
+    -fx-background-color: -red-100;
+    -fx-text-fill: -red-700;
+    -fx-font-size: 18px;
+    -fx-font-weight: 900;
+    -fx-padding: 6 16;
+    -fx-background-radius: 999;
+}
+.chip-lg { -fx-font-size: 12px; -fx-padding: 6 13; }
+
+/* Availability pill, coloured by status. */
+.availability-pill { -fx-background-radius: 999; -fx-padding: 5 12; -fx-font-size: 11px; -fx-font-weight: 800; }
+.availability-available { -fx-background-color: -state-success-bg; -fx-text-fill: -state-success; }
+.availability-busy { -fx-background-color: -state-pending-bg; -fx-text-fill: -state-pending; }
+.availability-out-of-town { -fx-background-color: -state-neutral-bg; -fx-text-fill: -state-neutral; }
+.availability-medical-hold { -fx-background-color: -state-danger-bg; -fx-text-fill: -state-danger; }
+
+/* Urgency, with the critical variant driven by a Java pulse animation. */
+.urgency-label { -fx-font-size: 11px; -fx-font-weight: 800; }
+.urgency-critical { -fx-text-fill: -red-600; }
+.urgency-urgent { -fx-text-fill: -state-pending; }
+.urgency-normal { -fx-text-fill: -state-neutral; }
+.pulse-dot { -fx-fill: -red-500; }
+
+/* ============================================================================
+   Badges (see util.BadgeRegistry -- colours come from badges.json, so these
+   classes only carry layout/typography, never the tier colour)
+   ========================================================================= */
+.badge-view { -fx-alignment: center-left; -fx-spacing: 6; }
+.badge-label { -fx-font-size: 11px; -fx-font-weight: 800; }
+.badge-label-lg { -fx-font-size: 13px; -fx-font-weight: 800; }
+.badge-chip { -fx-background-radius: 999; -fx-padding: 4 10; -fx-alignment: center-left; -fx-spacing: 6; }
+
+/* ============================================================================
+   Star rating
+   ========================================================================= */
+.star-filled { -fx-fill: #E8A33D; }
+.star-empty { -fx-fill: #E1EAE4; }
+.star-rating-number { -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: -text-secondary; -fx-padding: 0 0 0 4; }
+.star-rating-empty-note { -fx-font-size: 11px; -fx-font-style: italic; -fx-text-fill: -text-muted; }
+
+/* ============================================================================
+   Brand mark. Self-authored geometric teardrop (a bezier peak into a
+   semicircular arc base), drawn as a native JavaFX SVGPath -- zero new
+   dependencies, and it can never render as a missing-glyph box the way an
+   icon font can. Every icon in util.Icons follows this same convention.
+   ========================================================================= */
+.brand-icon { -fx-fill: -red-600; }
+.brand-icon-light { -fx-fill: -green-300; }
+
+/* ============================================================================
+   Donor profile dialog (see view.components.DonorProfileDialog)
+   ========================================================================= */
+.profile-dialog { -fx-background-color: -page-bg; }
+.profile-header {
+    -fx-background-color: linear-gradient(to bottom right, -green-700, -green-900);
+    -fx-padding: 24 28;
+}
+.profile-name { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: white; }
+.profile-subtle { -fx-font-size: 12px; -fx-text-fill: -green-300; }
+.profile-section-title { -fx-font-size: 15px; -fx-font-weight: 800; -fx-text-fill: -green-800; }
+.profile-stat-tile {
+    -fx-background-color: -surface;
+    -fx-background-radius: 14;
+    -fx-border-color: -hairline;
+    -fx-border-radius: 14;
+    -fx-padding: 14;
+    -fx-alignment: center;
+    -fx-spacing: 4;
+}
+.profile-stat-value { -fx-font-size: 19px; -fx-font-weight: 900; -fx-text-fill: -green-800; }
+.profile-stat-label { -fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: -text-muted; }
+.profile-icon { -fx-fill: -green-600; }
+.profile-icon-muted { -fx-fill: -text-muted; }
+
+/* Contact block, and the locked variant shown before the donor accepts. */
+.contact-row { -fx-alignment: center-left; -fx-spacing: 10; }
+.contact-value { -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: -text-primary; }
+.contact-locked {
+    -fx-background-color: -state-pending-bg;
+    -fx-background-radius: 12;
+    -fx-padding: 14;
+    -fx-border-color: #F0DDB4;
+    -fx-border-radius: 12;
+}
+.contact-locked-text { -fx-text-fill: -state-pending; -fx-font-size: 12px; -fx-font-weight: 600; }
+
+/* Donation history rendered as a timeline: a rail with a node per donation. */
+.timeline-rail { -fx-background-color: -green-100; -fx-min-width: 2; -fx-max-width: 2; }
+.timeline-node { -fx-fill: -green-500; }
+.timeline-node-unverified { -fx-fill: #D6E3DA; }
+.timeline-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -hairline;
+    -fx-border-radius: 12;
+    -fx-padding: 12 14;
+}
+.timeline-date { -fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: -green-700; }
+.timeline-title { -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: -text-primary; }
+.timeline-meta { -fx-font-size: 11px; -fx-text-fill: -text-muted; }
+
+/* Review card. */
+.review-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -hairline;
+    -fx-border-radius: 12;
+    -fx-padding: 14;
+}
+.review-author { -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: -text-primary; }
+.review-date { -fx-font-size: 11px; -fx-text-fill: -text-muted; }
+.review-comment { -fx-font-size: 12px; -fx-text-fill: -text-secondary; }
+
+/* ============================================================================
+   Activity feed (admin). The per-event icon well is tinted by event kind.
+   ========================================================================= */
+.feed-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -hairline;
+    -fx-border-radius: 12;
+    -fx-padding: 12;
+}
+.feed-card:hover { -fx-border-color: -green-300; }
+.feed-icon-well {
+    -fx-background-radius: 999;
+    -fx-min-width: 30; -fx-min-height: 30; -fx-max-width: 30; -fx-max-height: 30;
+    -fx-alignment: center;
+    -fx-background-color: -state-neutral-bg;
+}
+.feed-icon-well-success { -fx-background-color: -state-success-bg; }
+.feed-icon-well-danger { -fx-background-color: -state-danger-bg; }
+.feed-icon-well-info { -fx-background-color: -state-info-bg; }
+.feed-icon-well-pending { -fx-background-color: -state-pending-bg; }
+.feed-icon { -fx-fill: -state-neutral; }
+.feed-icon-success { -fx-fill: -state-success; }
+.feed-icon-danger { -fx-fill: -state-danger; }
+.feed-icon-info { -fx-fill: -state-info; }
+.feed-icon-pending { -fx-fill: -state-pending; }
+.feed-actor { -fx-font-weight: bold; -fx-fill: -text-primary; }
+.feed-action { -fx-fill: -text-secondary; }
+.feed-detail { -fx-fill: -text-primary; }
+
+/* ============================================================================
+   Registration progress indicator
+   ========================================================================= */
+.step-dot {
+    -fx-background-color: -green-100;
+    -fx-background-radius: 999;
+    -fx-min-width: 26; -fx-min-height: 26; -fx-max-width: 26; -fx-max-height: 26;
+    -fx-alignment: center;
+    -fx-font-size: 11px; -fx-font-weight: 800;
+    -fx-text-fill: -green-700;
+}
+.step-dot-active { -fx-background-color: -green-600; -fx-text-fill: white; }
+.step-label { -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: -text-secondary; }
+.step-connector { -fx-background-color: -green-100; -fx-min-height: 2; -fx-max-height: 2; }
