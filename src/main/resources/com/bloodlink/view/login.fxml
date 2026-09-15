@@ -1,58 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+  Sign-in. Two panels rather than the previous single centred card: a deep green
+  brand slab carrying the teardrop mark and the pulse motif, beside a white form
+  panel. The asymmetry is deliberate — it gives the app a front door with some
+  presence instead of one more centred box, and it is the only screen where the
+  brand gets that much room.
+
+  The supporting artwork is drawn from simple shapes (the teardrop, the pulse
+  line, a few circles), not a raster image, so it scales cleanly and adds no
+  asset to ship.
+-->
+
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.transform.Scale?>
 
 <StackPane xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.bloodlink.controller.LoginController"
            styleClass="auth-background"
            stylesheets="@../css/theme.css"
-           prefWidth="1000" prefHeight="700">
+           prefWidth="1060" prefHeight="720">
 
-    <VBox spacing="22" styleClass="auth-card" maxWidth="460" maxHeight="-Infinity" alignment="CENTER">
-        <padding><Insets top="36" right="36" bottom="36" left="36"/></padding>
+    <GridPane styleClass="auth-card" maxWidth="920" maxHeight="-Infinity">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="44"/>
+            <ColumnConstraints percentWidth="56"/>
+        </columnConstraints>
 
-        <VBox spacing="4" alignment="CENTER">
-            <StackPane>
-                <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon" scaleX="1.36" scaleY="1.36"/>
-                <ImageView fx:id="appLogoView" fitWidth="38" fitHeight="38" preserveRatio="true"/>
+        <!-- Brand panel -->
+        <VBox spacing="18" styleClass="brand-panel" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <StackPane alignment="CENTER_LEFT">
+                <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z"
+                         styleClass="brand-icon" scaleX="1.5" scaleY="1.5"/>
+                <ImageView fx:id="appLogoView" fitWidth="42" fitHeight="42" preserveRatio="true"/>
             </StackPane>
-            <Label text="BloodLink" styleClass="header-brand"/>
-            <Label text="Sign in to continue" styleClass="helper-text"/>
+
+            <Label text="BloodLink" styleClass="brand-title"/>
+            <Label text="Every minute counts." styleClass="brand-tagline"/>
+
+            <!-- The pulse motif, repeated from the icon set so the shape language
+                 is not confined to the logo. Drawn at final size rather than
+                 scaled: a non-uniform scale would flatten the trace and stretch
+                 its stroke weight with it. -->
+            <SVGPath content="M0,20 H56 L66,20 L74,5 L84,35 L92,20 L104,20 L112,12 L120,20 H210"
+                     styleClass="pulse-line"/>
+
+            <Label wrapText="true" styleClass="brand-copy"
+                   text="Emergency blood coordination for Bangladesh. We match verified donors to real, urgent requests — and keep both sides accountable with confirmed handshakes and honest reviews."/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Three drawn dots echoing the droplet, used as a quiet footer rule. -->
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Circle radius="4" styleClass="brand-icon-light"/>
+                <Circle radius="4" styleClass="brand-icon-light" opacity="0.6"/>
+                <Circle radius="4" styleClass="brand-icon-light" opacity="0.3"/>
+            </HBox>
         </VBox>
 
-        <VBox spacing="6">
-            <Label text="I AM A" styleClass="field-label"/>
-            <ComboBox fx:id="roleCombo" maxWidth="Infinity"/>
+        <!-- Form panel -->
+        <VBox spacing="20" styleClass="auth-form-panel" alignment="CENTER_LEFT"
+              GridPane.columnIndex="1" GridPane.rowIndex="0">
+
+            <VBox spacing="4">
+                <Label text="Welcome back" styleClass="page-title"/>
+                <Label text="Sign in to continue" styleClass="helper-text"/>
+            </VBox>
+
+            <VBox spacing="6">
+                <Label text="I AM A" styleClass="field-label"/>
+                <ComboBox fx:id="roleCombo" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox spacing="6">
+                <Label text="EMAIL" styleClass="field-label"/>
+                <HBox styleClass="input-with-icon" alignment="CENTER_LEFT" spacing="8">
+                    <Group>
+                        <SVGPath content="M2.4,5.2 H21.6 V18.8 H2.4 Z M4.6,7.3 L12,13.1 L19.4,7.3 L19.4,9.5 L12,15.3 L4.6,9.5 Z"
+                                 styleClass="field-icon" fillRule="EVEN_ODD">
+                            <transforms><Scale x="0.62" y="0.62"/></transforms>
+                        </SVGPath>
+                    </Group>
+                    <TextField fx:id="emailField" promptText="you@example.com" HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="6">
+                <Label text="PASSWORD" styleClass="field-label"/>
+                <HBox styleClass="input-with-icon" alignment="CENTER_LEFT" spacing="8">
+                    <Group>
+                        <SVGPath content="M4.4,10.4 H19.6 V21.8 H4.4 Z M7,10.4 V7.4 A5,5 0 0 1 17,7.4 V10.4 H14.6 V7.4 A2.6,2.6 0 0 0 9.4,7.4 V10.4 Z M12,13 A1.9,1.9 0 1 1 12,16.8 A1.9,1.9 0 1 1 12,13 Z M11.2,16.8 H12.8 V19.4 H11.2 Z"
+                                 styleClass="field-icon" fillRule="EVEN_ODD">
+                            <transforms><Scale x="0.62" y="0.62"/></transforms>
+                        </SVGPath>
+                    </Group>
+                    <PasswordField fx:id="passwordField" promptText="Password" HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <Label fx:id="errorLabel" styleClass="error-text" wrapText="true"/>
+
+            <Button fx:id="signInButton" text="Sign In" styleClass="button-primary"
+                    maxWidth="Infinity" onAction="#signIn"/>
+
+            <HBox spacing="6" alignment="CENTER">
+                <Label text="New to BloodLink?" styleClass="helper-text"/>
+                <Button text="Create an account" styleClass="button-ghost" onAction="#openRegistration"/>
+            </HBox>
         </VBox>
-
-        <VBox spacing="6">
-            <Label text="EMAIL" styleClass="field-label"/>
-            <TextField fx:id="emailField" promptText="you@example.com"/>
-        </VBox>
-
-        <VBox spacing="6">
-            <Label text="PASSWORD" styleClass="field-label"/>
-            <PasswordField fx:id="passwordField" promptText="Password"/>
-        </VBox>
-
-        <Label fx:id="errorLabel" styleClass="error-text" wrapText="true"/>
-
-        <Button fx:id="signInButton" text="Sign In" styleClass="button-primary" maxWidth="Infinity" onAction="#signIn"/>
-
-        <HBox spacing="6" alignment="CENTER">
-            <Label text="New to BloodLink?" styleClass="helper-text"/>
-            <Button text="Create an account" styleClass="button-ghost" onAction="#openRegistration"/>
-        </HBox>
-    </VBox>
+    </GridPane>
 </StackPane>

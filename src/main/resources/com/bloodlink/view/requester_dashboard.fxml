@@ -14,7 +14,6 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.SplitPane?>
@@ -58,7 +57,7 @@
     </top>
 
     <center>
-        <TabPane styleClass="workspace-tabs" tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="workspaceTabs" styleClass="workspace-tabs" tabClosingPolicy="UNAVAILABLE">
 
             <Tab text="New Request">
                 <ScrollPane fitToWidth="true" styleClass="transparent-scroll">
@@ -145,9 +144,14 @@
                         </VBox>
 
                         <VBox spacing="10" styleClass="content-card">
-                            <Label text="Matched donors" styleClass="section-title"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="Matched donors" styleClass="section-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="Double-click a donor, or use Profile, to see their full profile"
+                                       styleClass="helper-text"/>
+                            </HBox>
                             <SplitPane prefHeight="220" dividerPositions="0.4">
-                                <ListView fx:id="matchList" />
+                                <ListView fx:id="matchList" styleClass="card-list"/>
                                 <WebView fx:id="mapView" />
                             </SplitPane>
                         </VBox>

@@ -6,6 +6,7 @@ import com.bloodlink.model.*;
 import com.bloodlink.service.*;
 import com.bloodlink.util.*;
 import com.bloodlink.util.LogoManager;
+import com.bloodlink.view.components.EmptyState;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -47,6 +48,7 @@ public final class RequesterDashboardController {
     @FXML private TableColumn<BloodRequest, LocalDate> deadlineColumn;
     @FXML private TableColumn<BloodRequest, RequestStatus> statusColumn;
 
+    @FXML private TabPane workspaceTabs;
     @FXML private ListView<MatchCandidate> matchList;
     @FXML private WebView mapView;
     
@@ -94,6 +96,11 @@ public final class RequesterDashboardController {
         }
         this.requester = currentRequester;
         welcomeLabel.setText(requester.getFullName());
+        TabIcons.apply(workspaceTabs, java.util.Map.of(
+                "New Request", Icons.PLUS_CIRCLE,
+                "My Requests", Icons.LIST,
+                "Notifications", Icons.BELL,
+                "Profile", Icons.USER));
         LogoManager.applyLogo(appLogoView);
         new ProfileService().loadPhoto(requester.getId()).ifPresent(bytes -> {
             try {
@@ -236,17 +243,23 @@ public final class RequesterDashboardController {
         historyFromColumn.setCellFactory(ChipTableCells.forValues());
         historyToColumn.setCellFactory(ChipTableCells.forValues());
 
-        requestTable.setPlaceholder(emptyState("You have not submitted a blood request yet."));
-        matchList.setPlaceholder(emptyState("Select a request to view ranked donor matches."));
+        requestTable.setPlaceholder(emptyState("No requests yet",
+                "Submit one from the New Request tab and matched donors will appear here."));
+        matchList.setPlaceholder(emptyState("No donors matched yet",
+                "Select one of your requests above to see the donors ranked for it."));
         matchList.setCellFactory(lv -> new com.bloodlink.view.components.RequesterMatchCell());
-        historyTable.setPlaceholder(emptyState("Select a request to view its lifecycle history."));
-        notificationList.setPlaceholder(emptyState("You have no notifications."));
+        historyTable.setPlaceholder(emptyState("Nothing to show",
+                "Select a request above to follow how its status changed."));
+        notificationList.setPlaceholder(emptyState("You are all caught up",
+                "Updates about your requests and matched donors land here."));
     }
 
-    private Label emptyState(String text) {
-        Label label = new Label(text);
-        label.getStyleClass().add("empty-state");
-        return label;
+    private javafx.scene.Node emptyState(String text) {
+        return EmptyState.of(text);
+    }
+
+    private javafx.scene.Node emptyState(String title, String hint) {
+        return EmptyState.of(title, hint);
     }
 
     private void populateProfile() {

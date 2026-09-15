@@ -68,6 +68,10 @@ public final class Icons {
     public static final String HOSPITAL = "M3.6,21.4 V6.4 L12,2.2 L20.4,6.4 V21.4 Z "
             + "M10.8,8.6 H13.2 V11.6 H16.2 V14 H13.2 V17 H10.8 V14 H7.8 V11.6 H10.8 Z";
     public static final String HEART = "M12,21.2 C12,21.2 2.8,15 2.8,8.9 A4.9,4.9 0 0 1 12,6.2 A4.9,4.9 0 0 1 21.2,8.9 C21.2,15 12,21.2 12,21.2 Z";
+    public static final String LOCK = "M4.4,10.4 H19.6 V21.8 H4.4 Z "
+            + "M7,10.4 V7.4 A5,5 0 0 1 17,7.4 V10.4 H14.6 V7.4 A2.6,2.6 0 0 0 9.4,7.4 V10.4 Z "
+            + "M12,13 A1.9,1.9 0 1 1 12,16.8 A1.9,1.9 0 1 1 12,13 Z "
+            + "M11.2,16.8 H12.8 V19.4 H11.2 Z";
     /** Stroke-only: draw with {@link #pulseLine}, never filled. */
     public static final String PULSE = "M1.5,12 H6.8 L9.3,4.6 L13.2,19.4 L15.7,12 H22.5";
 

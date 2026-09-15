@@ -7,6 +7,8 @@ import com.bloodlink.model.*;
 import com.bloodlink.service.*;
 import com.bloodlink.util.LogoManager;
 import com.bloodlink.util.*;
+import com.bloodlink.view.components.BadgeView;
+import com.bloodlink.view.components.EmptyState;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -35,6 +37,8 @@ public final class DonorDashboardController {
     @FXML private ImageView appLogoView;
     @FXML private Label welcomeLabel;
     @FXML private Label bloodGroupLabel;
+    @FXML private Label profileBloodGroupLabel;
+    @FXML private TabPane workspaceTabs;
     @FXML private Label badgeLabel;
     @FXML private Label eligibilityLabel;
     @FXML private Label cooldownLabel;
@@ -124,6 +128,14 @@ public final class DonorDashboardController {
         }
         this.donor = currentDonor;
         welcomeLabel.setText(donor.getFullName());
+        TabIcons.apply(workspaceTabs, java.util.Map.of(
+                "Overview", Icons.HOME,
+                "My Impact", Icons.HEART,
+                "Nearby Hospitals", Icons.HOSPITAL,
+                "Matched Requests", Icons.DROPLET,
+                "Donation History", Icons.CLOCK,
+                "Notifications", Icons.BELL,
+                "Profile", Icons.USER));
         LogoManager.applyLogo(appLogoView);
         new ProfileService().loadPhoto(donor.getId()).ifPresent(bytes -> {
             try {
@@ -273,16 +285,31 @@ public final class DonorDashboardController {
         }
     }
 
-    private Label emptyState(String text) {
-        Label label = new Label(text);
-        label.getStyleClass().add("empty-state");
-        return label;
+    /**
+     * Renders the donor's tier through {@link BadgeView} instead of printing the
+     * raw enum constant, which is what {@code badgeTier + " donor"} used to put on
+     * screen ("PLATINUM donor"). The label text, icon and colour all come from
+     * the editable badge manifest.
+     */
+    private void applyBadge() {
+        badgeLabel.setText(null);
+        badgeLabel.setGraphic(new BadgeView(donor.getBadgeTier(), 22, false));
+    }
+
+    private javafx.scene.Node emptyState(String text) {
+        return EmptyState.of(text);
+    }
+
+    private javafx.scene.Node emptyState(String title, String hint) {
+        return EmptyState.of(title, hint);
     }
 
     private void populateProfile() {
         welcomeLabel.setText("Welcome, " + donor.getFullName());
-        bloodGroupLabel.setText(donor.getBloodGroup().toString());
-        badgeLabel.setText(donor.getBadgeTier() + " donor");
+        String bloodGroup = donor.getBloodGroup() == null ? "—" : donor.getBloodGroup().toString();
+        bloodGroupLabel.setText(bloodGroup);
+        profileBloodGroupLabel.setText(bloodGroup);
+        applyBadge();
         
         // Personal Information
         nameField.setText(donor.getFullName());

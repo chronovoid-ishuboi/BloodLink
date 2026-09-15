@@ -8,6 +8,7 @@ import com.bloodlink.service.ProfileService;
 import com.bloodlink.service.RequestService;
 import com.bloodlink.service.ServiceResult;
 import com.bloodlink.util.*;
+import com.bloodlink.view.components.DonorProfileDialog;
 import com.bloodlink.util.LogoManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -36,6 +37,7 @@ public final class AdminDashboardController {
     @FXML private Label activeRequestsLabel;
     @FXML private Label fulfillmentRateLabel;
     @FXML private Label statusMessageLabel;
+    @FXML private TabPane workspaceTabs;
     @FXML private BarChart<String, Number> demandChart;
     @FXML private LineChart<String, Number> monthlyChart;
     @FXML private PieChart statusChart;
@@ -108,6 +110,13 @@ public final class AdminDashboardController {
         }
         this.admin = currentAdmin;
         welcomeLabel.setText("Admin: " + admin.getFullName());
+        TabIcons.apply(workspaceTabs, java.util.Map.of(
+                "Overview", Icons.CHART,
+                "Users", Icons.USERS,
+                "Requests", Icons.DROPLET,
+                "Demand", Icons.HEART,
+                "Audit Log", Icons.CLOCK,
+                "Settings", Icons.SETTINGS));
         LogoManager.applyLogo(appLogoView);
         new ProfileService().loadPhoto(admin.getId()).ifPresent(bytes -> {
             try {
@@ -398,6 +407,27 @@ public final class AdminDashboardController {
     @FXML private void activateSelectedUser() {
         AdminUserRow selected = selectedUser(); if (selected == null) return;
         showResult(adminService.setActive(selected.id(), true, admin.getId())); refreshAll();
+    }
+
+    /**
+     * Opens the same rich donor profile a requester sees, from the Users table.
+     * Admins get the full-access variant -- {@code DonorProfileService} grants
+     * that from the live session after re-checking the role against the
+     * database, not because this screen asked for it.
+     * <p>
+     * Only meaningful for donors: requesters and admins have no donation
+     * history, reputation or availability to show, so the action says so rather
+     * than opening an empty dialog.
+     */
+    @FXML private void viewSelectedProfile() {
+        AdminUserRow selected = selectedUser(); if (selected == null) return;
+        if (selected.role() != Role.DONOR) {
+            AlertUtil.info("No donor profile", selected.fullName() + " is a "
+                    + selected.role().name().toLowerCase(java.util.Locale.ROOT)
+                    + ", so there is no donation history or donor rating to show.");
+            return;
+        }
+        DonorProfileDialog.show(userTable.getScene().getWindow(), selected.id(), null, null);
     }
 
     @FXML private void resetSelectedPassword() {
