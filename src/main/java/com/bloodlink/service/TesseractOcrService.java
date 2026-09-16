@@ -7,6 +7,7 @@ import net.sourceforge.tess4j.TesseractException;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,13 +39,32 @@ import java.util.regex.Pattern;
  */
 public final class TesseractOcrService implements OcrService {
     private static final Pattern NAME_PATTERN = Pattern.compile("(?i)name\\s*[:\\-]?\\s*([A-Za-z .'\\-]{3,60})");
+    /**
+     * Matches both the textual form a Bangladesh NID normally prints
+     * ("14 Mar 1998") and the numeric forms that turn up on older or
+     * re-issued cards ("14-03-1998", "14/03/1998").
+     */
     private static final Pattern DOB_PATTERN = Pattern.compile(
-            "(?i)date\\s*of\\s*birth\\s*[:\\-]?\\s*(\\d{1,2}\\s+[A-Za-z]{3,9}\\s+\\d{4})");
+            "(?i)date\\s*of\\s*birth\\s*[:\\-]?\\s*"
+                    + "(\\d{1,2}\\s+[A-Za-z]{3,9}\\s+\\d{4}|\\d{1,2}[-/.]\\d{1,2}[-/.]\\d{4})");
     private static final Pattern BLOOD_GROUP_PATTERN = Pattern.compile("(?i)blood\\s*group[^:]*[:\\-]?\\s*([ABO][A-Za-z+-]{0,2})");
     private static final Pattern ADDRESS_PATTERN = Pattern.compile("(?i)address[^:]*[:\\-]?\\s*([^\\n]+)");
     private static final Pattern NID_PATTERN = Pattern.compile("(?i)(?:national\\s*id\\s*no|id\\s*no|nid\\s*no)\\s*[:\\-]?\\s*([0-9]{10,17})");
+    /**
+     * <b>Locale.ENGLISH is load-bearing, not decoration.</b> A Bangladesh NID
+     * prints its month in English ("Mar"), but {@code ofPattern} without a
+     * locale binds to the machine's default at class-load time. On a machine set
+     * to Bengali -- i.e. a good share of this app's actual users -- the
+     * formatter would expect Bengali month names and every date on every card
+     * would silently fail to parse, leaving the date-of-birth field blank with
+     * no error to explain why.
+     */
     private static final DateTimeFormatter[] DOB_FORMATS = {
-            DateTimeFormatter.ofPattern("d MMM yyyy"), DateTimeFormatter.ofPattern("d MMMM yyyy")
+            DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH),
+            DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH),
+            DateTimeFormatter.ofPattern("d-M-yyyy", Locale.ENGLISH),
+            DateTimeFormatter.ofPattern("d/M/yyyy", Locale.ENGLISH),
+            DateTimeFormatter.ofPattern("d.M.yyyy", Locale.ENGLISH)
     };
 
     @Override
@@ -68,6 +88,14 @@ public final class TesseractOcrService implements OcrService {
         } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
             // Expected on a machine without Tesseract installed -- not a bug, not logged as one.
             return NidExtraction.failure("Local OCR (Tesseract) is not installed on this machine. You can fill in your details manually below.");
+        } catch (RuntimeException e) {
+            // Tess4J talks to a native library through JNA, which can surface a
+            // half-configured install as an unchecked exception rather than the two
+            // errors above (a broken TESSDATA_PREFIX, a missing eng.traineddata, an
+            // architecture mismatch). Registration must survive all of it: the whole
+            // contract of this class is that OCR failure never blocks manual entry.
+            return NidExtraction.failure("Local OCR could not run on this machine ("
+                    + e.getClass().getSimpleName() + "). You can fill in your details manually below.");
         }
     }
 

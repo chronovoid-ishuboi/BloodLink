@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 public class ActivityFeed extends ScrollPane {
     private final VBox feedContainer;
     private final AdminDAO adminDAO = new AdminDAO();
-    private Timeline refreshTimeline;
+    private final Timeline refreshTimeline;
 
     public ActivityFeed() {
         this.setFitToWidth(true);
@@ -43,6 +43,20 @@ public class ActivityFeed extends ScrollPane {
         refreshTimeline.play();
         
         refreshFeed();
+    }
+
+    /**
+     * Stops the 15-second refresh loop.
+     * <p>
+     * The timeline runs INDEFINITE and nothing used to stop it: on logout the
+     * admin controller stopped its own poller but this one kept querying the
+     * audit log forever, and a second admin session would start another
+     * alongside it. The {@code fx:id} on this node in the FXML existed but had no
+     * matching controller field, so there was no handle to call this on -- that
+     * field is now present, and logout calls this.
+     */
+    public void stop() {
+        refreshTimeline.stop();
     }
 
     private void refreshFeed() {

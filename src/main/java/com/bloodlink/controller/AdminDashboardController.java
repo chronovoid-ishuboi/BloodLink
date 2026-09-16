@@ -38,6 +38,7 @@ public final class AdminDashboardController {
     @FXML private Label fulfillmentRateLabel;
     @FXML private Label statusMessageLabel;
     @FXML private TabPane workspaceTabs;
+    @FXML private com.bloodlink.view.components.ActivityFeed activityFeed;
     @FXML private BarChart<String, Number> demandChart;
     @FXML private LineChart<String, Number> monthlyChart;
     @FXML private PieChart statusChart;
@@ -468,6 +469,9 @@ public final class AdminDashboardController {
 
     @FXML private void logout() {
         if (refreshTimeline != null) refreshTimeline.stop();
+        // The activity feed runs its own independent 15-second poller, which used
+        // to outlive the screen because nothing held a reference to it.
+        if (activityFeed != null) activityFeed.stop();
         PushClient.getInstance().disconnect();
         SceneManager.logout();
     }

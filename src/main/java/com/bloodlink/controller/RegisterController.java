@@ -170,14 +170,25 @@ public final class RegisterController {
     @FXML private void backToLogin() { SceneManager.showLogin(); }
 
     /**
-     * Optional identity-registration assist, per the spec's required
-     * workflow: upload -> OCR -> user reviews/edits -> user confirms -> only
-     * then does anything touch a real form field. Never pre-fills blood
-     * group, never sets any "verified" flag -- this is a form-fill shortcut
-     * for name and date of birth, nothing more.
+     * Optional identity-registration assist, per the spec's required workflow:
+     * upload -> OCR -> user reviews/edits -> user confirms -> only then does
+     * anything touch a real form field. Nothing is auto-accepted and no
+     * "verified" flag is ever set: this is a form-fill shortcut.
+     * <p>
+     * <b>Blood group is among the fields this pre-fills</b>, from the value the
+     * user confirmed in the review dialog. The previous version of this comment
+     * claimed it never did, which was simply not what the code below does --
+     * worth correcting rather than leaving, because it is exactly the field where
+     * a reader would want the documentation to be accurate. The review dialog
+     * flags that field specifically, and the value stays editable on this form
+     * afterwards; per {@link com.bloodlink.model.NidExtraction}, a scanned blood
+     * group is never treated as proof of anything.
+     * <p>
+     * The scan itself runs off the JavaFX Application Thread, so this hands
+     * {@link NidScanDialog} a callback rather than waiting on a return value.
      */
     @FXML private void scanNid() {
-        NidScanDialog.show(scanNidButton.getScene().getWindow()).ifPresent(result -> {
+        NidScanDialog.show(scanNidButton.getScene().getWindow(), result -> {
             if (result.name() != null && !result.name().isBlank()) fullNameField.setText(result.name());
             if (result.birthDate() != null) birthDatePicker.setValue(result.birthDate());
             if (result.bloodGroup() != null) bloodGroupCombo.setValue(result.bloodGroup());
