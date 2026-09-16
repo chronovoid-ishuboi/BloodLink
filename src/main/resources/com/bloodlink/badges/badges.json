@@ -1,0 +1,7 @@
+{
+  "NONE":     { "label": "New Donor",      "icon": "none.svg",     "color": "#8A9A94" },
+  "BRONZE":   { "label": "Bronze Donor",   "icon": "bronze.svg",   "color": "#B0703A" },
+  "SILVER":   { "label": "Silver Donor",   "icon": "silver.svg",   "color": "#8C9AA6" },
+  "GOLD":     { "label": "Gold Donor",     "icon": "gold.svg",     "color": "#C79A2E" },
+  "PLATINUM": { "label": "Platinum Donor", "icon": "platinum.svg", "color": "#5C8AA0" }
+}

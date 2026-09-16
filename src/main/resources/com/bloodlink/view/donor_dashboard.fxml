@@ -15,7 +15,6 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.SplitPane?>
@@ -27,6 +26,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.transform.Scale?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
@@ -58,7 +59,7 @@
     </top>
 
     <center>
-        <TabPane styleClass="workspace-tabs" tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="workspaceTabs" styleClass="workspace-tabs" tabClosingPolicy="UNAVAILABLE">
 
             <Tab text="Overview">
                 <ScrollPane fitToWidth="true" styleClass="transparent-scroll">
@@ -66,18 +67,36 @@
                         <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
 
                         <HBox spacing="16">
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="BLOOD GROUP" styleClass="stat-label"/>
-                                <Label fx:id="bloodGroupLabel" styleClass="stat-value-accent" text="—"/>
-                            </VBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well, stat-icon-well-accent">
+                                    <Group>
+                                        <SVGPath content="M12,2 C12,2 5,10.6 5,14.9 A7,7 0 0 0 19,14.9 C19,10.6 12,2 12,2 Z" styleClass="stat-icon-accent" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="BLOOD GROUP" styleClass="stat-label"/>
+                                    <Label fx:id="bloodGroupLabel" styleClass="stat-value-accent" text="—"/>
+                                </VBox>
+                            </HBox>
                             <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
                                 <Label text="DONOR STATUS" styleClass="stat-label"/>
                                 <Label fx:id="badgeLabel" styleClass="stat-value" text="—"/>
                             </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="ELIGIBILITY" styleClass="stat-label"/>
-                                <Label fx:id="eligibilityLabel" styleClass="stat-value" text="—"/>
-                            </VBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well">
+                                    <Group>
+                                        <SVGPath content="M12,2.2 L20.2,5.4 V11.6 C20.2,16.8 16.8,20.9 12,22.2 C7.2,20.9 3.8,16.8 3.8,11.6 V5.4 Z M10.9,16.1 L7.2,12.4 L8.9,10.7 L10.9,12.7 L15.3,8.3 L17,10 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="ELIGIBILITY" styleClass="stat-label"/>
+                                    <Label fx:id="eligibilityLabel" styleClass="stat-value" text="—"/>
+                                </VBox>
+                            </HBox>
                         </HBox>
 
                         <VBox spacing="10" styleClass="content-card">
@@ -101,22 +120,58 @@
                         <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
                         <Label text="Every figure here is a real, verified count from your own donation history -- not an estimate." styleClass="helper-text" wrapText="true"/>
                         <HBox spacing="16">
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="VERIFIED DONATIONS" styleClass="stat-label"/>
-                                <Label fx:id="impactDonationsLabel" styleClass="stat-value-accent" text="—"/>
-                            </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="TOTAL UNITS DONATED" styleClass="stat-label"/>
-                                <Label fx:id="impactUnitsLabel" styleClass="stat-value" text="—"/>
-                            </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="HOSPITALS HELPED" styleClass="stat-label"/>
-                                <Label fx:id="impactHospitalsLabel" styleClass="stat-value" text="—"/>
-                            </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="YOUR RATING" styleClass="stat-label"/>
-                                <Label fx:id="impactRatingLabel" styleClass="stat-value-accent" text="—"/>
-                            </VBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well, stat-icon-well-accent">
+                                    <Group>
+                                        <SVGPath content="M12,2 C12,2 5,10.6 5,14.9 A7,7 0 0 0 19,14.9 C19,10.6 12,2 12,2 Z" styleClass="stat-icon-accent" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="VERIFIED DONATIONS" styleClass="stat-label"/>
+                                    <Label fx:id="impactDonationsLabel" styleClass="stat-value-accent" text="—"/>
+                                </VBox>
+                            </HBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well">
+                                    <Group>
+                                        <SVGPath content="M12,21.2 C12,21.2 2.8,15 2.8,8.9 A4.9,4.9 0 0 1 12,6.2 A4.9,4.9 0 0 1 21.2,8.9 C21.2,15 12,21.2 12,21.2 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="TOTAL UNITS DONATED" styleClass="stat-label"/>
+                                    <Label fx:id="impactUnitsLabel" styleClass="stat-value" text="—"/>
+                                </VBox>
+                            </HBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well">
+                                    <Group>
+                                        <SVGPath content="M3.6,21.4 V6.4 L12,2.2 L20.4,6.4 V21.4 Z M10.8,8.6 H13.2 V11.6 H16.2 V14 H13.2 V17 H10.8 V14 H7.8 V11.6 H10.8 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="HOSPITALS HELPED" styleClass="stat-label"/>
+                                    <Label fx:id="impactHospitalsLabel" styleClass="stat-value" text="—"/>
+                                </VBox>
+                            </HBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well, stat-icon-well-accent">
+                                    <Group>
+                                        <SVGPath content="M12,2 L14.9,8.6 L22,9.3 L16.6,14.1 L18.2,21 L12,17.4 L5.8,21 L7.4,14.1 L2,9.3 L9.1,8.6 Z" styleClass="stat-icon-accent" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="YOUR RATING" styleClass="stat-label"/>
+                                    <Label fx:id="impactRatingLabel" styleClass="stat-value-accent" text="—"/>
+                                </VBox>
+                            </HBox>
                         </HBox>
                         <VBox spacing="6" styleClass="content-card">
                             <Label fx:id="impactSinceLabel" styleClass="section-title" text="—"/>
@@ -154,7 +209,7 @@
                         <Button text="Confirm Donated" styleClass="button-primary" onAction="#confirmDonated"/>
                     </HBox>
                     <SplitPane VBox.vgrow="ALWAYS" dividerPositions="0.4">
-                        <ListView fx:id="matchList" />
+                        <ListView fx:id="matchList" styleClass="card-list"/>
                         <WebView fx:id="mapView" />
                     </SplitPane>
                 </VBox>
@@ -275,7 +330,7 @@
                                 </columnConstraints>
                                 <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="0">
                                     <Label text="BLOOD GROUP" styleClass="field-label"/>
-                                    <Label fx:id="bloodGroupLabel" styleClass="stat-value" text=""/>
+                                    <Label fx:id="profileBloodGroupLabel" styleClass="stat-value" text=""/>
                                 </VBox>
                                 <VBox spacing="6" GridPane.rowIndex="0" GridPane.columnIndex="1">
                                     <Label text="WEIGHT (KG)" styleClass="field-label"/>

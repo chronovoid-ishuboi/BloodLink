@@ -57,6 +57,7 @@ public final class ReviewDialog {
         content.setPrefWidth(420);
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        AlertUtil.applyTheme(dialog.getDialogPane());
 
         Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {

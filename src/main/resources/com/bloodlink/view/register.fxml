@@ -14,11 +14,12 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.transform.Scale?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.control.ToggleGroup?>
 
 
 <StackPane xmlns="http://javafx.com/javafx/21"
@@ -34,13 +35,26 @@
 
             <VBox spacing="20" maxWidth="600">
 
-                <VBox spacing="4" alignment="CENTER">
+                <VBox spacing="6" alignment="CENTER">
                     <StackPane>
                         <SVGPath content="M14,0 C14,0 4.2,12.6 4.2,18.2 A9.8,9.8 0 0 0 23.8,18.2 C23.8,12.6 14,0 14,0 Z" styleClass="brand-icon" scaleX="1.2" scaleY="1.2"/>
                         <ImageView fx:id="appLogoView" fitWidth="34" fitHeight="34" preserveRatio="true"/>
                     </StackPane>
-                    <Label text="Create your BloodLink account" styleClass="header-brand"/>
+                    <Label text="Create your BloodLink account" styleClass="page-title"/>
+                    <Label text="Three short sections. Your contact details stay private until you accept a request."
+                           styleClass="helper-text" wrapText="true" textAlignment="CENTER"/>
                 </VBox>
+
+                <!-- Progress indicator. The form is one scroll rather than a wizard,
+                     so these mark how far through the three sections you are; the
+                     controller lights each dot as its section is filled in. -->
+                <HBox spacing="0" alignment="CENTER">
+                    <Label fx:id="stepDot1" text="1" styleClass="step-dot"/>
+                    <Region styleClass="step-connector" prefWidth="46"/>
+                    <Label fx:id="stepDot2" text="2" styleClass="step-dot"/>
+                    <Region styleClass="step-connector" prefWidth="46"/>
+                    <Label fx:id="stepDot3" text="3" styleClass="step-dot"/>
+                </HBox>
 
                 <VBox spacing="6">
                     <Label text="I WANT TO REGISTER AS" styleClass="field-label"/>
@@ -50,16 +64,25 @@
                 <!-- 1. Personal Information -->
                 <VBox styleClass="content-card" spacing="14">
                     <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
-                    <Label text="Personal Information" styleClass="section-title"/>
+                    <HBox spacing="9" alignment="CENTER_LEFT">
+                        <Group>
+                            <SVGPath content="M12,3.4 A4.3,4.3 0 1 0 12,12 A4.3,4.3 0 1 0 12,3.4 Z M12,13.8 C7.6,13.8 4,16.5 4,20.1 V21.2 H20 V20.1 C20,16.5 16.4,13.8 12,13.8 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                <transforms><Scale x="0.72" y="0.72"/></transforms>
+                            </SVGPath>
+                        </Group>
+                        <Label text="Identity" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="STEP 1 OF 3" styleClass="field-label"/>
+                    </HBox>
                     
                     <HBox spacing="16" alignment="CENTER_LEFT">
-                        <StackPane styleClass="profile-photo-container">
-                            <Label fx:id="profileInitialsLabel" text="?" styleClass="profile-initials" visible="true" />
-                            <ImageView fx:id="profilePhotoView" fitWidth="80" fitHeight="80" visible="false" styleClass="profile-photo" preserveRatio="true"/>
+                        <StackPane>
+                            <Label fx:id="profileInitialsLabel" text="?" styleClass="avatar-initials" visible="true"/>
+                            <ImageView fx:id="profilePhotoView" fitWidth="84" fitHeight="84" visible="false" styleClass="avatar-photo" preserveRatio="false"/>
                         </StackPane>
                         <VBox spacing="8" alignment="CENTER_LEFT">
                             <Button text="Upload Photo" onAction="#uploadPhoto" styleClass="button-secondary"/>
-                            <Button text="Remove" onAction="#removePhoto" styleClass="button-ghost" style="-fx-text-fill: #64748b;"/>
+                            <Button text="Remove" onAction="#removePhoto" styleClass="button-ghost"/>
                         </VBox>
                     </HBox>
                     
@@ -95,7 +118,16 @@
                 <!-- 2. Contact Information -->
                 <VBox styleClass="content-card" spacing="14">
                     <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
-                    <Label text="Contact Information" styleClass="section-title"/>
+                    <HBox spacing="9" alignment="CENTER_LEFT">
+                        <Group>
+                            <SVGPath content="M2.4,5.2 H21.6 V18.8 H2.4 Z M4.6,7.3 L12,13.1 L19.4,7.3 L19.4,9.5 L12,15.3 L4.6,9.5 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                <transforms><Scale x="0.72" y="0.72"/></transforms>
+                            </SVGPath>
+                        </Group>
+                        <Label text="Contact &amp; Access" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="STEP 2 OF 3" styleClass="field-label"/>
+                    </HBox>
                     
                     <GridPane hgap="16" vgap="14">
                         <columnConstraints>
@@ -144,7 +176,16 @@
                 <!-- 3. Health & Eligibility -->
                 <VBox fx:id="donorFields" styleClass="content-card" spacing="14">
                     <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
-                    <Label text="Health &amp; Eligibility" styleClass="section-title"/>
+                    <HBox spacing="9" alignment="CENTER_LEFT">
+                        <Group>
+                            <SVGPath content="M12,21.2 C12,21.2 2.8,15 2.8,8.9 A4.9,4.9 0 0 1 12,6.2 A4.9,4.9 0 0 1 21.2,8.9 C21.2,15 12,21.2 12,21.2 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                <transforms><Scale x="0.72" y="0.72"/></transforms>
+                            </SVGPath>
+                        </Group>
+                        <Label text="Health &amp; Eligibility" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="STEP 3 OF 3" styleClass="field-label"/>
+                    </HBox>
                     
                     <GridPane hgap="16" vgap="14">
                         <columnConstraints>

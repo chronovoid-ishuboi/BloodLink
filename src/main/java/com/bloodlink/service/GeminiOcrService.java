@@ -3,6 +3,9 @@ package com.bloodlink.service;
 import com.bloodlink.util.AppConfig;
 import com.bloodlink.model.BloodGroup;
 import com.bloodlink.model.NidExtraction;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,11 +22,18 @@ import java.util.logging.Logger;
 
 public final class GeminiOcrService implements OcrService {
     private static final Logger LOGGER = Logger.getLogger(GeminiOcrService.class.getName());
-    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=%s";
+    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
     private final String apiKey;
+    private final String model;
 
     public GeminiOcrService() {
         this.apiKey = AppConfig.get("gemini.api.key");
+        // The model id used to be hard-coded. Google retires and renames these on
+        // their own schedule, and a wrong id fails at request time with a 404 that
+        // looks exactly like a bad API key -- so it belongs in configuration, where
+        // it can be corrected without a rebuild. The default preserves the previous
+        // behaviour; see application.properties.
+        this.model = AppConfig.get("gemini.model");
     }
 
     public boolean isConfigured() {
@@ -33,9 +43,16 @@ public final class GeminiOcrService implements OcrService {
     @Override
     public NidExtraction extract(List<File> imageFiles) {
         if (!isConfigured()) {
-            // Mock fallback for student demo if no API key is provided
-            return new NidExtraction(true, "Demo User", LocalDate.of(1995, 1, 1),
-                    BloodGroup.O_POSITIVE, "Dhaka, Bangladesh", "1234567890", null);
+            // Previously this returned a *successful* extraction for a fictional
+            // "Demo User" -- including a blood group of O_POSITIVE -- whenever no API
+            // key was set. That is the one thing an OCR path in a blood-donation app
+            // must never do: the review dialog presents a successful result as
+            // "detected from your card", so a user could accept a fabricated blood
+            // group and register with it. NidExtraction's own Javadoc says this is
+            // "never proof of blood group". Fail honestly instead; NidScanDialog
+            // already falls back to local Tesseract, and manual entry always works.
+            return NidExtraction.failure("AI-assisted scanning is not configured on this machine "
+                    + "(no gemini.api.key). You can fill in your details manually below.");
         }
         if (imageFiles == null || imageFiles.isEmpty()) {
             return NidExtraction.failure("No image files were provided.");
@@ -80,7 +97,7 @@ public final class GeminiOcrService implements OcrService {
 
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(String.format(API_URL_TEMPLATE, apiKey)))
+                    .uri(URI.create(String.format(API_URL_TEMPLATE, model, apiKey)))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
@@ -88,20 +105,11 @@ public final class GeminiOcrService implements OcrService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                LOGGER.warning("Gemini API error: " + response.statusCode() + " - " + response.body());
-                String errorMsg = "AI processing failed. Check your API key and quota.";
-                try {
-                    // Try to extract the actual error message from Google's response
-                    int msgStart = response.body().indexOf("\"message\": \"");
-                    if (msgStart != -1) {
-                        msgStart += 12;
-                        int msgEnd = response.body().indexOf("\"", msgStart);
-                        if (msgEnd != -1) {
-                            errorMsg = "Google API Error: " + response.body().substring(msgStart, msgEnd);
-                        }
-                    }
-                } catch (Exception ignored) {}
-                return NidExtraction.failure(errorMsg);
+                // Truncated: an error body can be large, and is third-party content
+                // being written into this app's log.
+                LOGGER.warning("Gemini API error " + response.statusCode() + " (model \"" + model + "\"): "
+                        + abbreviate(response.body(), 400));
+                return NidExtraction.failure(errorMessageFrom(response.body(), response.statusCode()));
             }
 
             return parseGeminiResponse(response.body());
@@ -112,38 +120,66 @@ public final class GeminiOcrService implements OcrService {
         }
     }
 
+    /** Surfaces Google's own explanation when it gives one, since "check your key" is rarely the real cause. */
+    private String errorMessageFrom(String body, int statusCode) {
+        try {
+            JSONObject error = new JSONObject(body).optJSONObject("error");
+            String message = error == null ? null : error.optString("message", null);
+            if (message != null && !message.isBlank()) return "Google API error: " + message;
+        } catch (JSONException ignored) {
+            // Non-JSON error body (a proxy or gateway page); fall through.
+        }
+        if (statusCode == 404) {
+            return "The configured AI model \"" + model + "\" was not found (HTTP 404). "
+                    + "Check the gemini.model setting.";
+        }
+        return "AI processing failed (HTTP " + statusCode + "). Check your API key and quota.";
+    }
+
     private String getMimeType(File file) {
         String name = file.getName().toLowerCase();
         if (name.endsWith(".png")) return "image/png";
         return "image/jpeg";
     }
 
+    /**
+     * Pulls the model's text out of Google's JSON envelope.
+     * <p>
+     * This used to scan the raw response with {@code indexOf} and unescape it with
+     * chained {@code replace} calls. That was wrong in two ways: the scan for the
+     * closing quote mis-handled a literal backslash before it, and the unescaping
+     * rewrote {@code \\n} (an escaped backslash, then 'n') into a newline. Now that
+     * the project has a JSON parser on the classpath for the badge manifest, this
+     * reads the envelope properly and both classes of bug disappear.
+     */
     private NidExtraction parseGeminiResponse(String jsonResponse) {
-        // Find the "text" field in the Gemini JSON response more robustly
-        int textStart = jsonResponse.indexOf("\"text\"");
-        if (textStart == -1) {
-            return NidExtraction.failure("Could not parse AI response.");
+        String rawText;
+        try {
+            JSONArray candidates = new JSONObject(jsonResponse).optJSONArray("candidates");
+            if (candidates == null || candidates.isEmpty()) {
+                // A 200 with no candidate usually means the prompt or the image was
+                // blocked; say so rather than reporting a parse failure.
+                return NidExtraction.failure("The AI returned no result for these images. "
+                        + "Try a clearer photo, or fill in your details manually.");
+            }
+            JSONArray parts = candidates.getJSONObject(0).optJSONObject("content") == null
+                    ? null : candidates.getJSONObject(0).getJSONObject("content").optJSONArray("parts");
+            if (parts == null || parts.isEmpty()) {
+                return NidExtraction.failure("Could not read the AI response.");
+            }
+            StringBuilder text = new StringBuilder();
+            for (int i = 0; i < parts.length(); i++) {
+                text.append(parts.getJSONObject(i).optString("text", ""));
+            }
+            rawText = text.toString();
+        } catch (JSONException e) {
+            LOGGER.log(Level.WARNING, "Unparseable Gemini response", e);
+            return NidExtraction.failure("Could not read the AI response.");
         }
-        textStart = jsonResponse.indexOf("\"", textStart + 6);
-        if (textStart == -1) return NidExtraction.failure("Could not parse AI response.");
-        textStart++;
-        
-        int textEnd = jsonResponse.indexOf("\"", textStart);
-        // Handle escaped quotes inside the text field
-        while (textEnd != -1 && jsonResponse.charAt(textEnd - 1) == '\\') {
-            textEnd = jsonResponse.indexOf("\"", textEnd + 1);
-        }
-        if (textEnd == -1) {
-            return NidExtraction.failure("Could not parse AI response.");
-        }
-        
-        // Extract and unescape the text
-        String rawText = jsonResponse.substring(textStart, textEnd)
-                                     .replace("\\n", "\n")
-                                     .replace("\\\"", "\"");
 
-        // Remove markdown backticks if Gemini ignored instructions
+        // Strip code fences if the model ignored the "no Markdown" instruction.
         rawText = rawText.replace("```text", "").replace("```", "").trim();
+        if (rawText.isBlank()) return NidExtraction.failure("The AI returned an empty result.");
 
         String name = null;
         LocalDate dob = null;
@@ -165,6 +201,11 @@ public final class GeminiOcrService implements OcrService {
         }
 
         return new NidExtraction(true, name, dob, bloodGroup, address, nid, null);
+    }
+
+    private static String abbreviate(String value, int max) {
+        if (value == null) return "";
+        return value.length() <= max ? value : value.substring(0, max) + "... (truncated)";
     }
 
     private String extractValue(String line) {

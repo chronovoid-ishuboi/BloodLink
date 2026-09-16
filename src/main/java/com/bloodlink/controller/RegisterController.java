@@ -12,6 +12,9 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 public final class RegisterController {
     @FXML private ComboBox<Role> roleCombo;
     @FXML private TextField fullNameField;
@@ -47,6 +50,9 @@ public final class RegisterController {
     
     @FXML private ImageView profilePhotoView;
     @FXML private Label profileInitialsLabel;
+    @FXML private Label stepDot1;
+    @FXML private Label stepDot2;
+    @FXML private Label stepDot3;
     
     private byte[] profilePhotoBytes = null;
 
@@ -67,6 +73,41 @@ public final class RegisterController {
         setupToggleField(currentMedicationsCheck, currentMedicationsDetailsField);
         setupToggleField(recentIllnessCheck, recentIllnessDetailsField);
         setupToggleField(recentPregnancyCheck, recentPregnancyDetailsField);
+        setupStepIndicator();
+    }
+
+    /**
+     * Lights the step dots as each section of the form is filled in. The form is
+     * one long scroll rather than a wizard, so this is progress feedback on a
+     * 237-line form, not navigation -- nothing is gated on it, and a user can
+     * still fill the sections in any order.
+     */
+    private void setupStepIndicator() {
+        List<TextInputControl> identity = List.of(fullNameField);
+        List<TextInputControl> contact = List.of(emailField, phoneField, districtField, passwordField);
+        List<TextInputControl> health = List.of(weightField);
+
+        Runnable refresh = () -> {
+            setStepDone(stepDot1, allFilled(identity) && birthDatePicker.getValue() != null);
+            setStepDone(stepDot2, allFilled(contact));
+            // Requesters have no health section, so step 3 is complete for them by definition.
+            setStepDone(stepDot3, roleCombo.getValue() != Role.DONOR || allFilled(health));
+        };
+
+        Stream.of(identity, contact, health).flatMap(List::stream)
+                .forEach(field -> field.textProperty().addListener((obs, old, value) -> refresh.run()));
+        birthDatePicker.valueProperty().addListener((obs, old, value) -> refresh.run());
+        roleCombo.valueProperty().addListener((obs, old, value) -> refresh.run());
+        refresh.run();
+    }
+
+    private static boolean allFilled(List<TextInputControl> fields) {
+        return fields.stream().allMatch(field -> field.getText() != null && !field.getText().isBlank());
+    }
+
+    private static void setStepDone(Label dot, boolean done) {
+        dot.getStyleClass().removeAll("step-dot-active");
+        if (done) dot.getStyleClass().add("step-dot-active");
     }
     
     private void setupToggleField(CheckBox checkBox, TextField detailField) {
@@ -129,14 +170,25 @@ public final class RegisterController {
     @FXML private void backToLogin() { SceneManager.showLogin(); }
 
     /**
-     * Optional identity-registration assist, per the spec's required
-     * workflow: upload -> OCR -> user reviews/edits -> user confirms -> only
-     * then does anything touch a real form field. Never pre-fills blood
-     * group, never sets any "verified" flag -- this is a form-fill shortcut
-     * for name and date of birth, nothing more.
+     * Optional identity-registration assist, per the spec's required workflow:
+     * upload -> OCR -> user reviews/edits -> user confirms -> only then does
+     * anything touch a real form field. Nothing is auto-accepted and no
+     * "verified" flag is ever set: this is a form-fill shortcut.
+     * <p>
+     * <b>Blood group is among the fields this pre-fills</b>, from the value the
+     * user confirmed in the review dialog. The previous version of this comment
+     * claimed it never did, which was simply not what the code below does --
+     * worth correcting rather than leaving, because it is exactly the field where
+     * a reader would want the documentation to be accurate. The review dialog
+     * flags that field specifically, and the value stays editable on this form
+     * afterwards; per {@link com.bloodlink.model.NidExtraction}, a scanned blood
+     * group is never treated as proof of anything.
+     * <p>
+     * The scan itself runs off the JavaFX Application Thread, so this hands
+     * {@link NidScanDialog} a callback rather than waiting on a return value.
      */
     @FXML private void scanNid() {
-        NidScanDialog.show(scanNidButton.getScene().getWindow()).ifPresent(result -> {
+        NidScanDialog.show(scanNidButton.getScene().getWindow(), result -> {
             if (result.name() != null && !result.name().isBlank()) fullNameField.setText(result.name());
             if (result.birthDate() != null) birthDatePicker.setValue(result.birthDate());
             if (result.bloodGroup() != null) bloodGroupCombo.setValue(result.bloodGroup());

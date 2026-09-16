@@ -18,12 +18,6 @@
         <junit.version>5.10.2</junit.version>
     </properties>
 
-    <!--
-      No H2 dependency: BloodLink connects only to MySQL, with no embedded-
-      database fallback (see DBConnection.java). H2 was removed here because
-      an unused dependency for a database the app can no longer silently
-      switch to has no reason to stay on the classpath.
-    -->
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -60,16 +54,38 @@
             <artifactId>tess4j</artifactId>
             <version>5.16.0</version>
         </dependency>
+        <!--
+          JSON parsing for the hand-editable badge manifest
+          (resources/com/bloodlink/badges/badges.json). A tiny, dependency-free
+          library; chosen over hand-rolling a parser so a user's malformed edit
+          produces a clean exception that BadgeRegistry can fall back from,
+          rather than silently mis-parsing. Not a network dependency: the
+          manifest is a local classpath resource, so the app stays fully offline.
+        -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240303</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <!--
+          H2 is runtime-only. No source imports it: DBConnection and
+          DatabaseSetup both branch on a "jdbc:h2:" URL and load the driver by
+          name, so it is needed on the classpath but never at compile time.
+          It backs the local-development database URL and SchemaCompatibilityTest.
+          The comment that used to sit here claimed there was no H2 dependency
+          at all, which did not match either this block or those two classes.
+        -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>2.2.224</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

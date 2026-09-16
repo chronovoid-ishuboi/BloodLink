@@ -19,9 +19,10 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.transform.Scale?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.image.ImageView?>
 <?import com.bloodlink.view.components.ActivityFeed?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
@@ -52,7 +53,7 @@
     </top>
 
     <center>
-        <TabPane styleClass="workspace-tabs" tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="workspaceTabs" styleClass="workspace-tabs" tabClosingPolicy="UNAVAILABLE">
 
             <Tab text="Overview">
                 <ScrollPane fitToWidth="true" styleClass="transparent-scroll">
@@ -60,22 +61,58 @@
                         <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
 
                         <HBox spacing="16">
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="TOTAL DONORS" styleClass="stat-label"/>
-                                <Label fx:id="totalDonorsLabel" styleClass="stat-value-accent" text="—"/>
-                            </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="PENDING REQUESTS" styleClass="stat-label"/>
-                                <Label fx:id="pendingRequestsLabel" styleClass="stat-value" text="—"/>
-                            </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="ACTIVE REQUESTS" styleClass="stat-label"/>
-                                <Label fx:id="activeRequestsLabel" styleClass="stat-value" text="—"/>
-                            </VBox>
-                            <VBox styleClass="stat-card" spacing="8" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
-                                <Label text="FULFILLMENT RATE" styleClass="stat-label"/>
-                                <Label fx:id="fulfillmentRateLabel" styleClass="stat-value-accent" text="—"/>
-                            </VBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well, stat-icon-well-accent">
+                                    <Group>
+                                        <SVGPath content="M8.6,3.4 A3.8,3.8 0 1 0 8.6,11 A3.8,3.8 0 1 0 8.6,3.4 Z M8.6,12.6 C4.8,12.6 1.6,15 1.6,18.2 V21 H15.6 V18.2 C15.6,15 12.4,12.6 8.6,12.6 Z M17.2,5.2 A3.2,3.2 0 1 0 17.2,11.6 A3.2,3.2 0 1 0 17.2,5.2 Z M17.2,13 C16.6,13 16.1,13.1 15.6,13.2 C16.9,14.6 17.6,16.3 17.6,18.2 V21 H22.4 V18.2 C22.4,15.3 20.1,13 17.2,13 Z" styleClass="stat-icon-accent" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="TOTAL DONORS" styleClass="stat-label"/>
+                                    <Label fx:id="totalDonorsLabel" styleClass="stat-value-accent" text="—"/>
+                                </VBox>
+                            </HBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well">
+                                    <Group>
+                                        <SVGPath content="M12,2 A10,10 0 1 0 12,22 A10,10 0 1 0 12,2 Z M10.9,5.8 H13.1 V12.3 L17.1,14.6 L16,16.5 L10.9,13.6 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="PENDING REQUESTS" styleClass="stat-label"/>
+                                    <Label fx:id="pendingRequestsLabel" styleClass="stat-value" text="—"/>
+                                </VBox>
+                            </HBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well">
+                                    <Group>
+                                        <SVGPath content="M12,2 C12,2 5,10.6 5,14.9 A7,7 0 0 0 19,14.9 C19,10.6 12,2 12,2 Z" styleClass="stat-icon" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="ACTIVE REQUESTS" styleClass="stat-label"/>
+                                    <Label fx:id="activeRequestsLabel" styleClass="stat-value" text="—"/>
+                                </VBox>
+                            </HBox>
+                            <HBox styleClass="stat-card" spacing="14" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                                <StackPane styleClass="stat-icon-well, stat-icon-well-accent">
+                                    <Group>
+                                        <SVGPath content="M12,2 A10,10 0 1 0 12,22 A10,10 0 1 0 12,2 Z M10.7,16.6 L6.2,12.1 L8,10.3 L10.7,13 L16,7.7 L17.8,9.5 Z" styleClass="stat-icon-accent" fillRule="EVEN_ODD">
+                                            <transforms><Scale x="0.76" y="0.76"/></transforms>
+                                        </SVGPath>
+                                    </Group>
+                                </StackPane>
+                                <VBox spacing="4">
+                                    <Label text="FULFILLMENT RATE" styleClass="stat-label"/>
+                                    <Label fx:id="fulfillmentRateLabel" styleClass="stat-value-accent" text="—"/>
+                                </VBox>
+                            </HBox>
                         </HBox>
 
                         <VBox spacing="10" styleClass="content-card">
@@ -119,6 +156,7 @@
                         <Button text="Approve" styleClass="button-primary" onAction="#approveSelectedUser"/>
                         <Button text="Suspend" styleClass="button-danger-outline" onAction="#suspendSelectedUser"/>
                         <Button text="Activate" styleClass="button-secondary" onAction="#activateSelectedUser"/>
+                        <Button text="View Profile" styleClass="button-secondary" onAction="#viewSelectedProfile"/>
                         <Button text="Reset Password" styleClass="button-ghost" onAction="#resetSelectedPassword"/>
                     </HBox>
                     <TableView fx:id="userTable" VBox.vgrow="ALWAYS">
@@ -225,7 +263,7 @@
                         <Label text="Custom App Logo" styleClass="field-label"/>
                         <HBox spacing="12" alignment="CENTER_LEFT">
                             <Button text="Upload New Logo" onAction="#uploadLogo" styleClass="button-secondary"/>
-                            <Button text="Reset to Default" onAction="#resetLogo" styleClass="button-ghost" style="-fx-text-fill: #ef4444;"/>
+                            <Button text="Reset to Default" onAction="#resetLogo" styleClass="button-danger-outline"/>
                         </HBox>
                         <Label text="Changes the logo displayed across all screens." styleClass="helper-text"/>
                     </VBox>
